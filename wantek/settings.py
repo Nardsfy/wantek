@@ -1,7 +1,7 @@
 # Config application
-SECRET_KEY  = "yuJMp7^BZVaHAeo!"
-APP_NAME    = "Flask Template"
-APP_INITIAL = "FT"
+SECRET_KEY  = "AM7Jx4aN!Un73rmI"
+APP_NAME    = "Wantek"
+APP_INITIAL = "W"
 COPYRIGHT   = "2023"
 VERSION     = "1.0.0"
 

@@ -12,7 +12,7 @@ login_manager.init_app(app)
 
 # Handle session login redirect and message
 login_manager.login_view                = "login"
-login_manager.login_message             = "Please log in to access this page."
+login_manager.login_message             = "Silahkan login terlebih dahulu."
 login_manager.login_message_category    = "danger"
 
 def connectionDB():
@@ -25,6 +25,6 @@ def connectionDB():
     return conn
 
 # Declare route controller application
-from flask_template.controllers.routes import (global_var)
-from flask_template.controllers.validate import (login_not_allowed)
-from flask_template.controllers.user import (login)
+from wantek.controllers.routes import (global_var)
+from wantek.controllers.validate import (login_not_allowed)
+from wantek.controllers.user import (login)

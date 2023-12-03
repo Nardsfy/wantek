@@ -1,10 +1,10 @@
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import current_user, login_user, logout_user, login_required
 from hashlib import md5
-from flask_template import app, login_manager
-from flask_template.models.userModel import User
-from flask_template.controllers.validate import login_not_allowed
-from flask_template.dao.userDao import get_data_user_loader, validate_user_login
+from wantek import app, login_manager
+from wantek.models.userModel import User
+from wantek.controllers.validate import login_not_allowed
+from wantek.dao.userDao import get_data_user_loader, validate_user_login
 
 @login_manager.user_loader
 def load_user(user_id):

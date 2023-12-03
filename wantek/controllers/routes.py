@@ -1,6 +1,6 @@
 from flask import render_template
 from flask_login import login_required
-from flask_template import app
+from wantek import app
 
 @app.route("/", methods=["GET"])
 @login_required

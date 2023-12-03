@@ -1,6 +1,6 @@
 import psycopg2
-from flask_template import connectionDB
-from flask_template.others.format import rows_to_dict_list, responseJSON
+from wantek import connectionDB
+from wantek.others.format import rows_to_dict_list, responseJSON
 
 def get_data_user_loader(p_id):
     """ Get data user for user_loader """
