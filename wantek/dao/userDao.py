@@ -11,14 +11,12 @@ def get_data_user_loader(p_id):
         try:
             cursor  = conn.cursor()
             query   =   """
-                            SELECT 
-                                u_id,
-                                u_username,
+                            SELECT                                                                 
                                 u_role
                             FROM 
                                 users
                             WHERE
-                                u_id = %(id)s
+                                u_username = %(id)s
                         """
             params  = {
                 "id"    : p_id
@@ -51,8 +49,7 @@ def validate_user_login(p_username, p_password):
         try:
             cursor  = conn.cursor()
             query   =   """
-                            SELECT 
-                                u_id,
+                            SELECT                                 
                                 u_username,
                                 u_password,
                                 u_role,
@@ -60,8 +57,8 @@ def validate_user_login(p_username, p_password):
                             FROM 
                                 users
                             WHERE
-                                u_username      = %(username)s
-                                AND u_password  = %(password)s
+                                LOWER (u_username)  = LOWER (%(username)s)
+                                AND u_password      = %(password)s
                         """
             params  = {
                 "username"  : p_username,
@@ -70,7 +67,7 @@ def validate_user_login(p_username, p_password):
 
             cursor.execute(query, params)
             data    = rows_to_dict_list(cursor)
-            print(data)
+
             message = "Success validate user login."            
             return responseJSON(200, "T", message, data)
         except psycopg2.Error as e:

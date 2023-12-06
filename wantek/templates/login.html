@@ -4,13 +4,16 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ APP_NAME }}{{ " - " ~ menu if menu else "" }}</title>
+    
     <!-- Favicon -->    
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='assets/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='assets/favicon-16x16.png') }}">    
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/favicon.ico') }}">
-
     <!-- Bootstrap 5 CSS -->    
-    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-5.0.2-dist/css/bootstrap.min.css') }}">    
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-5.0.2-dist/css/bootstrap.min.css') }}">   
+    <!-- Sweet Alert 2 CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='sweetalert2/sweetalert2.min.css') }}"> 
+
     <style>   
         :root {
             --main: #1E518E;
@@ -44,13 +47,13 @@
 
                     <div class="card-body">                            
                         <!-- Flash message -->
-                        {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% with messages = get_flashed_messages(with_categories=true, category_filter=["danger", "success", "info", "warning"]) %}
                         {% if messages %}
                         <label class="text-center w-100">
-                            {% for category, message in messages %}
+                            {% for category, message in messages %}                            
                             <div class="alert alert-{{ category }} p-1" role="alert">
-                                {{message}}
-                            </div>
+                                {{ message|trim|tojson|safe }}
+                            </div>                            
                             {% endfor %}
                         </label>
                         {% endif %}
@@ -59,14 +62,14 @@
                         <form id="formLogin" method="POST" action="{{ url_for('login') }}">
                             <div class="mb-3">
                                 <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control form-control-sm{{ ' is-invalid' if 'username' in validate }}" id="username" name="username" autocomplete="off"
-                                    placeholder="username" maxlength="12" required 
-                                    onkeydown="return this.value=this.value.toLowerCase()">
+                                <input type="text" class="form-control form-control-sm{{ ' is-invalid' if 'username' in validate }}" id="username" name="username" value="{{ username }}" autocomplete="off"
+                                    placeholder="username" maxlength="20" required 
+                                    pattern="[a-zA-Z0-9]+" onkeydown="return this.value=this.value.toLowerCase()">
                             </div>
                             <div class="mb-3">
                                 <label for="password" class="form-label">Password</label>
                                 <input type="password" class="form-control form-control-sm{{ ' is-invalid' if 'password' in validate }}" id="password" name="password"
-                                    placeholder="password" maxlength="20" required>
+                                    placeholder="password" minlength="6" maxlength="20" required>
                             </div>
                             <div class="text-end">
                                 <button type="submit" class="btn btn-sm text-light btn-form" style="background: var(--main);">
@@ -94,24 +97,39 @@
 
     <!-- Bootstrap 5 JS -->        
     <script src="{{ url_for('static', filename='bootstrap-5.0.2-dist/js/bootstrap.bundle.min.js') }}"></script>        
-    <!-- Font Awesome 6 -->        
-    <script src="{{ url_for('static', filename='font-awesome-6/font-awesome-6.js') }}"></script>        
     <!-- Jquery 3.6.4 -->        
-    <script src="{{ url_for('static', filename='jquery-3.6.4/jquery-3.6.4.min.js') }}"></script>            
-    
+    <script src="{{ url_for('static', filename='jquery-3.6.4/jquery-3.6.4.min.js') }}"></script>       
+    <!-- Font Awesome 6 -->        
+    <script src="{{ url_for('static', filename='font-awesome-6/font-awesome-6.js') }}"></script>      
+    <!-- Sweet Alert 2 -->
+    <script src="{{ url_for('static', filename='sweetalert2/sweetalert2.min.js') }}"></script>
 
     <script type="text/javascript">
-        function showLoading() {
-
-        };
-
-        function hideLoading() {
-
+        function alertMessage(category, message) {            
+            Swal.fire({
+                icon                : category == "danger" ? "error" : category, // Change category flash danger into error for icon
+                title               : category == "error" ? "Ups, terjadi kesalahan pada server" : "Notifikasi",                
+                html                : `<p class="alert alert-${category == "error" ? "danger" : category} p-2">${message}</p>`, // Change category error into danger for alert class
+                showConfirmButton   : false,
+                showCancelButton    : true,
+                cancelButtonText    : "Tutup",
+                allowOutsideClick   : false,
+                position            : "top"
+            });
         };
     </script>
 
-    {% block script %}
-    {% endblock script %}
+    {% with messages = get_flashed_messages(with_categories=true, category_filter=["error"]) %}
+    {% if messages %}    
+        {% for category, message in messages %}        
+        <script type="text/javascript">
+            let category    = '{{ category }}';
+            let message     = '{{ message|trim|tojson|safe }}';
+            alertMessage(category, message);
+        </script>        
+        {% endfor %}    
+    {% endif %}
+    {% endwith %}  
 </body>
 
 </html>

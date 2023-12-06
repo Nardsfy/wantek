@@ -28,3 +28,4 @@ def connectionDB():
 from wantek.controllers.routes import (global_var)
 from wantek.controllers.validate import (login_not_allowed)
 from wantek.controllers.user import (login)
+from wantek.controllers.master import (master_user)

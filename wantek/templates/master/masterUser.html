@@ -1,0 +1,193 @@
+{% extends "layout.html" %}
+{% block content %}    
+
+<div class="row">
+    <div class="col-sm-12">
+        <h3>Master user</h3>        
+    </div>
+
+    <hr>
+
+    <!-- Search form -->
+    <form class="col-sm-12 mb-4" method="GET" action="{{ url_for('master_user') }}">
+        <div class="row">
+            <div class="col-sm-12 col-md-4 col-lg-3 mb-2 mb-md-0">
+                <label for="searchUsername" class="form-label">Username</label>
+                <input type="text" id="searchUsername" class="form-control form-control-sm" name="username" autocomplete="off"
+                    placeholder="username" maxlength="12" value="{{ search['username'] }}" 
+                    onkeydown="return this.value=this.value.toLowerCase()">
+            </div>
+            <div class="col-sm-12 col-md-4 col-lg-3 mb-2 mb-md-0">
+                <label for="searchRole" class="form-label">Role</label>
+                <select id="searchRole" class="form-select form-select-sm" name="role">
+                    <option value="" selected>-- Pilih role --</option>
+                    {% for role in roles %}
+                    <option value="{{ role['r_id'] }}" {{ "selected" if search["role"] == role["r_id"] }}>{{ role["r_desc"] }}</option>                    
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-sm-12 col-md-4 col-lg-3">
+                <label for="searchStatus" class="form-label">Status</label>
+                <select id="searchStatus" class="form-select form-select-sm" name="status">
+                    <option value="">-- Pilih status --</option>
+                    <option value="T" {{ "selected" if search["status"] == "T" }}>Aktif</option>
+                    <option value="F" {{ "selected" if search["status"] == "F" }}>Tidak aktif</option>
+                </select>
+            </div>
+            <div class="col-sm-12 col-md-12 col-lg-3 mt-3 mt-lg-auto d-flex justify-content-center d-lg-flex justify-content-lg-start">
+                <button class="btn btn-sm text-light btn-form" style="background: var(--main);">
+                    <span>
+                        Cari
+                        <i class="fa fa-search"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <hr>
+    <!-- End of search form -->
+    <div class="col-sm-12 text-end mb-2">
+        <button class="btn btn-sm btn-form text-light" style="background: var(--main);" data-bs-toggle="modal" data-bs-target="#modalTambahUser">
+            <span>
+                Buat user
+                <i class="fa fa-plus"></i>
+            </span>
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered table-hover text-nowrap">
+            <thead class="table-primary">
+                <tr class="text-center align-middle">
+                    <th>#</th>
+                    <th>Username</th>                
+                    <th>Role</th>
+                    <th>Status</th>                
+                    <th>User pembuat</th>
+                    <th>Dibuat pada</th>
+                    <th>User update</th>
+                    <th>Diupdate pada</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if data|length > 0 %}
+                    {% for user in data %}
+                    <tr class="align-middle">
+                        <td class="text-center">{{ user["index"] }}</td>
+                        <td>{{ user["u_username"] }}</td>                
+                        <td class="text-center" data-value="{{ user['u_role'] }}">{{ user["role_desc"] }}</td>
+                        {% if user["u_status"] == "T" %}
+                        <td class="text-center">
+                            <span class="badge bg-success rounded-pill badge-table" data-value="{{ user['u_status'] }}">Aktif</span>
+                        </td>
+                        {% else %}
+                        <td class="text-center">
+                            <span class="badge bg-danger rounded-pill badge-table" data-value="{{ user['u_status'] }}">Tidak aktif</span>
+                        </td>
+                        {% endif %}
+                        <td>{{ user["u_ins_user"] }}</td>
+                        <td class="text-center">{{ user["u_ins_date"] }}</td>
+                        <td>{{ user["u_upd_user"] }}</td>
+                        <td class="text-center">{{ user["u_upd_date"] }}</td>                    
+                        <td class="text-center">              
+                            <span>
+                                <button class="btn btn-lg py-0 btn-icon" onclick="openModalEditUser(this)"><i class="fas fa-edit text-primary"></i></button>                                
+                            </span>                                                          
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr class="text-center align-middle">
+                        <td colspan="9">Data user tidak ditemukan.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        {{ pagination.links }}
+    </div>
+</div>
+
+<!-- Modal Tambah User -->
+<div id="modalTambahUser" class="modal fade" data-bs-backdrop="static" tabindex="-1" aria-labelledby="modalTambahUserLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header text-light" style="background: var(--main);">
+                <h5 id="modalTambahUserLabel" class="modal-title">Tambah user</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>        
+            <div class="modal-body">
+                <form id="formAddUser" method="POST" action="{{ url_for('master_user') }}">
+                    <label for="addUsername" class="form-label">Username</label>
+                    <input type="text" id="addUsername" class="form-control form-control-sm mb-3" name="username" autocomplete="off" placeholder="username" maxlength="20" pattern="[a-zA-Z0-9]+" onkeydown="return this.value=this.value.toLowerCase()" required>
+                    <label for="addPassword" class="form-label">Password</label>
+                    <input type="password" id="addPassword" class="form-control form-control-sm mb-3" name="password" placeholder="password" minlength="6" maxlength="20" required>                    
+                    <label for="addRole" class="form-label">Role</label>
+                    <select id="addRole" class="form-select form-select-sm mb-3" name="role">                        
+                        {% for role in roles %}
+                        <option value="{{ role['r_id'] }}">{{ role["r_desc"] }}</option>                    
+                        {% endfor %}
+                    </select>                                        
+                    <label for="addStatus" class="form-label">Status</label>
+                    <select id="addStatus" class="form-select form-select-sm" name="status">                        
+                        <option value="T" selected>Aktif</option>
+                        <option value="F">Tidak aktif</option>
+                    </select>                                
+                    <div class="modal-footer">
+                        <button id="addSimpan" type="submit" class="btn btn-form text-light w-100" style="background: var(--main);">Simpan</button>                    
+                    </div>
+                </form>                         
+            </div>     
+        </div>   
+    </div>
+</div>
+
+<!-- Modal Edit User -->
+<div id="modalEditUser" class="modal fade" data-bs-backdrop="static" tabindex="-1" aria-labelledby="modalEditUserLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header text-light" style="background: var(--main);">
+                <h5 id="modalEditUserLabel" class="modal-title">Ubah user</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>        
+            <div class="modal-body">
+                <form id="formEditUser" method="POST" action="{{ url_for('master_user_edit') }}">
+                    <label for="editUsername" class="form-label">Username</label>
+                    <input type="text" id="editUsername" class="form-control form-control-sm mb-3" name="username" readonly>                
+                    <label for="editRole" class="form-label">Role</label>
+                    <select id="editRole" class="form-select form-select-sm mb-3" name="role">                        
+                        {% for role in roles %}
+                        <option value="{{ role['r_id'] }}">{{ role["r_desc"] }}</option>                    
+                        {% endfor %}
+                    </select>                                        
+                    <label for="editStatus" class="form-label">Status</label>
+                    <select id="editStatus" class="form-select form-select-sm" name="status">                        
+                        <option value="T">Aktif</option>
+                        <option value="F">Tidak aktif</option>
+                    </select>                                
+                    <div class="modal-footer">
+                        <button id="editSimpan" type="submit" class="btn btn-form text-light w-100" style="background: var(--main);">Simpan</button>                    
+                    </div>
+                </form>                         
+            </div> 
+        </div>       
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block script %}
+<script type="text/javascript">    
+    function openModalEditUser(row) {
+        let username    = $(row).closest("tr").find("td:eq(1)").text();
+        let role        = $(row).closest("tr").find("td:eq(2)").data("value");
+        let status      = $(row).closest("tr").find("td:eq(3)>span").data("value");               
+        $("#editUsername").val(username);
+        $("#editRole").val(role);
+        $("#editStatus").val(status);
+
+        $("#modalEditUser").modal("show");
+    };    
+</script>
+{% endblock script %}

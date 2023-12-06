@@ -16,3 +16,15 @@ def global_var():
         COPYRIGHT   = app.config["COPYRIGHT"],
         VERSION     = app.config["VERSION"]
     )
+
+@app.errorhandler(403)
+def handle_forbidden(e):
+    return render_template("errors/403.html")
+
+@app.errorhandler(404)
+def handle_bad_request(e):
+    return render_template("errors/404.html")
+
+@app.errorhandler(405)
+def handle_method_not_allowed(e):
+    return render_template("errors/405.html")

@@ -4,13 +4,16 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ APP_NAME }}{{ " - " ~ menu if menu else "" }}</title>
+
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='assets/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='assets/favicon-16x16.png') }}">    
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/favicon.ico') }}">
-
     <!-- Bootstrap 5 CSS -->    
-    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-5.0.2-dist/css/bootstrap.min.css') }}">    
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-5.0.2-dist/css/bootstrap.min.css') }}"> 
+    <!-- Sweet Alert 2 CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='sweetalert2/sweetalert2.min.css') }}">    
+    
     <style>   
         :root {
             --main: #1E518E;
@@ -20,9 +23,25 @@
             background: #F7F7F7;
             font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;            
         }  
+
+        .btn-form {
+            width: 100px;
+        }
+
+        .btn-form:hover {
+            opacity: 90%;
+        }
         
         .active:hover {
             opacity: 90%;
+        }
+        
+        .badge-table {
+            width: 100px !important;
+        }
+
+        .btn-icon:hover {
+            opacity: 60%;
         }
     </style>
 </head>
@@ -31,33 +50,41 @@
 <body>    
     <nav class="navbar navbar-expand-lg navbar-dark" style="background: var(--main);">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">{{ APP_NAME }}</a>
+            <a class="navbar-brand" href=" {{ url_for('home') }}">{{ APP_NAME }}</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
                 <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="#">Home</a>
+                    <li class="nav-item dropdown">
+                        <a id="dropdown-master" class="nav-link dropdown-toggle {{ 'active' if 'Master' in menu }}" href="#" data-bs-toggle="dropdown" aria-expanded="false">Master</a>
+                        <ul class="dropdown-menu" aria-labelledby="dropdown-master">
+                            <li><a class="dropdown-item py-0" href="{{ url_for('master_user') }}">Master user</a></li>    
+                            <li><hr class="dropdown-divider"></li>                        
+                            <li><a class="dropdown-item py-0" href="{{ url_for('master_user') }}">Master warna</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Transaction</a>
+                        <a class="nav-link" href="#">Transaksi</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">Report</a>
                     </li>
                 </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('logout') }}">Logout</a>
+                <ul class="navbar-nav me-5">
+                    <li class="nav-item dropdown">                                                 
+                        <a id="dropdown-user" class="nav-link dropdown-toggle active" href="#" data-bs-toggle="dropdown" aria-expanded="false">{{ current_user.username|capitalize }}</a>                           
+                        <ul class="dropdown-menu" aria-labelledby="dropdown-user">
+                            <li><a class="dropdown-item py-0" href="{{ url_for('logout') }}">Logout</a></li>                                
+                        </ul>
                     </li>
                 </ul>
             </div>                     
         </div>
     </nav>    
 
-    <div class="container">        
+    <div class="container mt-2">        
         {% block content %}{% endblock content %}
     </div>
 
@@ -72,24 +99,42 @@
 
     <!-- Bootstrap 5 JS -->        
     <script src="{{ url_for('static', filename='bootstrap-5.0.2-dist/js/bootstrap.bundle.min.js') }}"></script>        
+    <!-- Jquery 3.6.4 -->        
+    <script src="{{ url_for('static', filename='jquery-3.6.4/jquery-3.6.4.min.js') }}"></script>                    
     <!-- Font Awesome 6 -->        
     <script src="{{ url_for('static', filename='font-awesome-6/font-awesome-6.js') }}"></script>        
-    <!-- Jquery 3.6.4 -->        
-    <script src="{{ url_for('static', filename='jquery-3.6.4/jquery-3.6.4.min.js') }}"></script>            
-    
+    <!-- Sweet Alert 2 -->
+    <script src="{{ url_for('static', filename='sweetalert2/sweetalert2.min.js') }}"></script>              
 
     <script type="text/javascript">
-        function showLoading() {
-
+        function alertMessage(category, message) {            
+            Swal.fire({
+                icon                : category == "danger" ? "error" : category, // Change category flash danger into error for icon
+                title               : category == "error" ? "Ups, terjadi kesalahan pada server" : "Notifikasi",                
+                html                : `<p class="alert alert-${category == "error" ? "danger" : category} p-2">${message}</p>`, // Change category error into danger for alert class
+                showConfirmButton   : false,
+                showCancelButton    : true,
+                cancelButtonText    : "Tutup",
+                allowOutsideClick   : false,
+                position            : "top"
+            });
         };
-
-        function hideLoading() {
-
-        };
-    </script>
+    </script>   
 
     {% block script %}
     {% endblock script %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}    
+        {% for category, message in messages %}         
+        <script type="text/javascript">
+            let category    = '{{ category }}';
+            let message     = '{{ message|trim|tojson|safe }}';
+            alertMessage(category, message);
+        </script>        
+        {% endfor %}    
+    {% endif %}
+    {% endwith %}
 </body>
 
 </html>
