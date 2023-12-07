@@ -67,7 +67,7 @@
                             <div class="mb-3">
                                 <label for="username" class="form-label">Username</label>                                
                                 <input type="text" class="form-control form-control-sm{{ ' is-invalid' if 'username' in validate }}" id="username" name="username" value="{{ username }}" autocomplete="off"
-                                    placeholder="username" maxlength="12" oninput="validateAlnum(event, 'lower')" required>
+                                    placeholder="username" maxlength="12" onkeypress="validateAlnum(event, 'lower')" required>
                             </div>
                             <div class="mb-3">
                                 <label for="password" class="form-label">Password</label>                                

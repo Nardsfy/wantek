@@ -120,7 +120,7 @@
             <div class="modal-body">
                 <form id="formAddUser" method="POST" action="{{ url_for('master_user') }}">
                     <label for="addUsername" class="form-label">Username</label>
-                    <input type="text" id="addUsername" class="form-control form-control-sm mb-3" name="username" autocomplete="off" placeholder="username" maxlength="12" oninput="validateAlnum(event, 'lower')" required>
+                    <input type="text" id="addUsername" class="form-control form-control-sm mb-3" name="username" autocomplete="off" placeholder="username" maxlength="12" onkeypress="validateAlnum(event, 'lower')" required>
                     <label for="addPassword" class="form-label">Password</label>
                     <input type="password" id="addPassword" class="form-control form-control-sm mb-3" name="password" placeholder="password" minlength="6" maxlength="20" required>                    
                     <label for="addRole" class="form-label">Role</label>
