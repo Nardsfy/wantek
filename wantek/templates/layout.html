@@ -100,7 +100,9 @@
     <!-- Bootstrap 5 JS -->        
     <script src="{{ url_for('static', filename='bootstrap-5.0.2-dist/js/bootstrap.bundle.min.js') }}"></script>        
     <!-- Jquery 3.6.4 -->        
-    <script src="{{ url_for('static', filename='jquery-3.6.4/jquery-3.6.4.min.js') }}"></script>                    
+    <script src="{{ url_for('static', filename='jquery-3.6.4/jquery-3.6.4.min.js') }}"></script>   
+    <!-- Jquery Validate -->
+    <script src="{{ url_for('static', filename='jquery-3.6.4/jquery.validate.min.js') }}"></script>                  
     <!-- Font Awesome 6 -->        
     <script src="{{ url_for('static', filename='font-awesome-6/font-awesome-6.js') }}"></script>        
     <!-- Sweet Alert 2 -->
@@ -118,6 +120,29 @@
                 allowOutsideClick   : false,
                 position            : "top"
             });
+        };
+
+        function validateAlnum(event, format_text) {            
+            // Get the pressed key
+            let key = event.key;
+
+            // Use a regular expression to check if the key is a letter or a number
+            let regex = /^[a-zA-Z0-9]$/;
+
+            if (!regex.test(key)) {
+                // If the key is not valid, prevent its input
+                event.preventDefault();                
+            } else {
+                // If pressed key is valid
+                if (format_text == "lower") {
+                    event.target.value += key.toLowerCase();
+                } else if (format_text == "upper") {
+                    event.target.value += key.toUpperCase();
+                } else {
+                    event.target.value += key;
+                }
+                event.preventDefault();
+            }
         };
     </script>   
 

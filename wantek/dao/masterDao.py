@@ -127,8 +127,33 @@ def get_data_user(p_username, p_status, p_role, p_offset, p_limit):
             conn.close() 
 
 def add_data_user(p_username, p_password, p_role, p_status, p_user_login):
-    """ Insert data user """    
-    
+    """ Insert data user """  
+    def cek_user(cursor, username): 
+        try:
+            query   =   """
+                            SELECT EXISTS (
+                                SELECT
+                                    1
+                                FROM
+                                    users
+                                WHERE
+                                    u_username = %(username)s
+                            )              
+                        """
+            params  = {
+                "username"  : username
+            }
+
+            cursor.execute(query, params)
+            data    = rows_to_dict_list(cursor)
+
+            message = "Sukses cek user."            
+            return responseJSON(200, "T", message, data)
+        except psycopg2.Error as e:
+            message = f"Error query: {str(e)}"
+            return responseJSON(400, "F", message, []) 
+    # End of cek_user
+
     conn    = None
     try:
         cursor  = None        
@@ -137,27 +162,15 @@ def add_data_user(p_username, p_password, p_role, p_status, p_user_login):
             cursor      = conn.cursor()      
 
             # Cek user sudah ada
-            query_cek   =   """
-                                SELECT EXISTS (
-                                    SELECT
-                                        1
-                                    FROM
-                                        users
-                                    WHERE
-                                        u_username = %(username)s
-                                )              
-                        """
-            params_cek  = {
-                "username"      : p_username
-            }
-
-            cursor.execute(query_cek, params_cek)
-            data_cek        = rows_to_dict_list(cursor)
-            is_user_exists  = data_cek[0]["exists"]
+            hasil_cek_user  = cek_user(cursor, p_username)
+            if (hasil_cek_user["status"] == "F"):
+                return hasil_cek_user
+            is_user_exists  = hasil_cek_user["result"][0]["exists"]
             if (is_user_exists):
                 message = f"User <strong>{p_username}</strong> sudah ada."            
                 return responseJSON(400, "I", message, [])
 
+            # Insert user
             query       =   """
                                 INSERT INTO users (
                                     u_username,
@@ -166,7 +179,7 @@ def add_data_user(p_username, p_password, p_role, p_status, p_user_login):
                                     u_status,
                                     u_ins_user
                                 ) VALUES (
-                                    %(username)s,
+                                    LOWER (%(username)s),
                                     %(password)s,
                                     %(role)s,
                                     %(status)s,
@@ -200,7 +213,31 @@ def add_data_user(p_username, p_password, p_role, p_status, p_user_login):
             conn.close() 
 
 def edit_data_user(p_username, p_role, p_status, p_user_login):
-    """ Insert data user """    
+    """ Update data user """  
+    def get_data_user_cek(cursor, username): 
+        try:
+            query   =   """
+                            SELECT
+                                u_role,
+                                u_status
+                            FROM
+                                users
+                            WHERE
+                                u_username = %(username)s              
+                        """
+            params  = {
+                "username"  : username
+            }
+
+            cursor.execute(query, params)
+            data    = rows_to_dict_list(cursor)
+
+            message = "Sukses get data user untuk cek."            
+            return responseJSON(200, "T", message, data)
+        except psycopg2.Error as e:
+            message = f"Error query: {str(e)}"
+            return responseJSON(400, "F", message, []) 
+    # End of cek_data_user
     
     conn    = None
     try:
@@ -208,6 +245,20 @@ def edit_data_user(p_username, p_role, p_status, p_user_login):
         conn    = connectionDB()
         try:
             cursor  = conn.cursor()
+
+            # Cek tidak ada data yang diupdate
+            hasil_get_data_user_cek = get_data_user_cek(cursor, p_username)
+            if (hasil_get_data_user_cek["status"] == "F"):
+                return hasil_get_data_user_cek
+            if (not hasil_get_data_user_cek["result"]):
+                return responseJSON(400, "F", f"User <strong>{p_username}</strong> tidak ditemukan.", [])            
+            cek_role    = hasil_get_data_user_cek["result"][0]["u_role"]
+            cek_status  = hasil_get_data_user_cek["result"][0]["u_status"]            
+            if (cek_role == p_role and cek_status == p_status):
+                message = f"Tidak ada data yang diubah untuk user <strong>{p_username}</strong>."
+                return responseJSON(400, "I", message, [])
+            
+            # Update user
             query   =   """
                             UPDATE users 
                             SET                                

@@ -44,9 +44,9 @@
             </div>
         </div>
     </form>
-
-    <hr>
     <!-- End of search form -->
+    <hr>
+
     <div class="col-sm-12 text-end mb-2">
         <button class="btn btn-sm btn-form text-light" style="background: var(--main);" data-bs-toggle="modal" data-bs-target="#modalTambahUser">
             <span>
@@ -120,7 +120,7 @@
             <div class="modal-body">
                 <form id="formAddUser" method="POST" action="{{ url_for('master_user') }}">
                     <label for="addUsername" class="form-label">Username</label>
-                    <input type="text" id="addUsername" class="form-control form-control-sm mb-3" name="username" autocomplete="off" placeholder="username" maxlength="20" pattern="[a-zA-Z0-9]+" onkeydown="return this.value=this.value.toLowerCase()" required>
+                    <input type="text" id="addUsername" class="form-control form-control-sm mb-3" name="username" autocomplete="off" placeholder="username" maxlength="12" oninput="validateAlnum(event, 'lower')" required>
                     <label for="addPassword" class="form-label">Password</label>
                     <input type="password" id="addPassword" class="form-control form-control-sm mb-3" name="password" placeholder="password" minlength="6" maxlength="20" required>                    
                     <label for="addRole" class="form-label">Role</label>
@@ -178,8 +178,9 @@
 {% endblock content %}
 
 {% block script %}
-<script type="text/javascript">    
-    function openModalEditUser(row) {
+<script type="text/javascript">      
+    // Function untuk set form edit user
+    function openModalEditUser(row) {        
         let username    = $(row).closest("tr").find("td:eq(1)").text();
         let role        = $(row).closest("tr").find("td:eq(2)").data("value");
         let status      = $(row).closest("tr").find("td:eq(3)>span").data("value");               
@@ -189,5 +190,51 @@
 
         $("#modalEditUser").modal("show");
     };    
+
+    // Validasi untuk form tambah user
+    $("#formAddUser").validate({  
+        rules           : {
+            username    : {
+                required    : true,
+                maxlength   : 12
+            },
+            password    : {
+                required    : true,
+                minlength   : 6,
+                maxlength   : 20
+            }
+        },
+        messages        : {
+            username        : {
+                required        : "Username tidak boleh kosong.",
+                maxlength       : "Username tidak boleh lebih dari {0} karakter."
+            },
+            password        : {
+                required        : "Password tidak boleh kosong.",
+                minlength       : "Password setidaknya memiliki {0} karakter.",
+                maxlength       : "Password tidak boleh lebih dari {0} karakter."
+            }
+        },
+        errorPlacement  : function (error, element) {
+            // Custom error placement for Bootstrap
+            error.addClass("invalid-feedback");
+            error.insertAfter(element);
+        },
+        highlight: function (element, errorClass, validClass) {
+            // Add Bootstrap is-invalid class to the form-control element
+            $(element).addClass("is-invalid");
+            // Add error class to the label
+            $(element).prev('label').addClass("is-invalid");
+        },
+        unhighlight: function (element, errorClass, validClass) {
+            // Remove Bootstrap is-invalid class from the form-control element
+            $(element).removeClass("is-invalid");
+            // Remove error class from the label
+            $(element).prev('label').removeClass("is-invalid");
+        },           
+        submitHandler   : function (form) {
+            form.submit();
+        }
+    });
 </script>
 {% endblock script %}

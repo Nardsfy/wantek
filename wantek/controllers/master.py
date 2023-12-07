@@ -114,7 +114,9 @@ def master_user_edit():
     message     = hasil_edit_data_user["message"]
     flash_type  = "success"
     if (hasil_edit_data_user["status"] == "F"):
-        flash_type  = "error"            
+        flash_type  = "error"
+    elif (hasil_edit_data_user["status"] == "I"):
+        flash_type  = "warning"
     
     flash(message, flash_type)
     return redirect(url_for("master_user"))
