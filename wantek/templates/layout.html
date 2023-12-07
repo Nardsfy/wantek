@@ -134,16 +134,26 @@
                 event.preventDefault();                
             } else {
                 // If pressed key is valid
-                if (format_text == "lower") {
-                    event.target.value += key.toLowerCase();
-                } else if (format_text == "upper") {
-                    event.target.value += key.toUpperCase();
+                let input   = event.target;
+                let maxLength = parseInt(input.getAttribute('maxlength'), 10);                
+                let currentLength = input.value.length;                
+
+                if (currentLength >= maxLength) {
+                    // If at maximum length, prevent further input
+                    event.preventDefault();
                 } else {
-                    event.target.value += key;
+                    if (format_text == "lower") {
+                        event.target.value += key.toLowerCase();
+                    } else if (format_text == "upper") {
+                        event.target.value += key.toUpperCase();
+                    } else {
+                        event.target.value += key;
+                    }
+                    event.preventDefault();
                 }
-                event.preventDefault();
             }
         };
+        
     </script>   
 
     {% block script %}
