@@ -128,8 +128,8 @@
     {% if messages %}    
         {% for category, message in messages %}         
         <script type="text/javascript">
-            let category    = '{{ category }}';
-            let message     = '{{ message|trim|tojson|safe }}';
+            let category    = {{ category|trim|tojson|safe }};
+            let message     = {{ message|trim|tojson|safe }};
             alertMessage(category, message);
         </script>        
         {% endfor %}    

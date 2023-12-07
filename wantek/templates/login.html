@@ -52,7 +52,7 @@
                         <label class="text-center w-100">
                             {% for category, message in messages %}                            
                             <div class="alert alert-{{ category }} p-1" role="alert">
-                                {{ message|trim|tojson|safe }}
+                                {{ message|safe }}
                             </div>                            
                             {% endfor %}
                         </label>
@@ -123,8 +123,8 @@
     {% if messages %}    
         {% for category, message in messages %}        
         <script type="text/javascript">
-            let category    = '{{ category }}';
-            let message     = '{{ message|trim|tojson|safe }}';
+            let category    = {{ category|trim|tojson|safe }};
+            let message     = {{ message|trim|tojson|safe }};
             alertMessage(category, message);
         </script>        
         {% endfor %}    
