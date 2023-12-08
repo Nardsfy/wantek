@@ -60,9 +60,10 @@
                     <li class="nav-item dropdown">
                         <a id="dropdown-master" class="nav-link dropdown-toggle {{ 'active' if 'Master' in menu }}" href="#" data-bs-toggle="dropdown" aria-expanded="false">Master</a>
                         <ul class="dropdown-menu" aria-labelledby="dropdown-master">
-                            <li><a class="dropdown-item py-0" href="{{ url_for('master_user') }}">Master user</a></li>    
+                            <li><a class="dropdown-item" href="{{ url_for('master_user') }}">Master user</a></li>    
+                            <li><a class="dropdown-item" href="{{ url_for('master_role') }}">Master role</a></li>    
                             <li><hr class="dropdown-divider"></li>                        
-                            <li><a class="dropdown-item py-0" href="{{ url_for('master_user') }}">Master warna</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('master_user') }}">Master warna</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">

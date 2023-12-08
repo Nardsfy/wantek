@@ -294,4 +294,47 @@ def edit_data_user(p_username, p_role, p_status, p_user_login):
         if (conn):            
             conn.close() 
 
+def get_data_menu():
+    """ Get data menu """    
+    
+    conn    = None
+    try:
+        cursor  = None        
+        conn    = connectionDB()
+        try:
+            cursor  = conn.cursor()
+            query   =   """
+                            SELECT        
+                                m_id,
+                                m_desc,
+                                m_level::int,
+                                m_flag_parent,
+                                m_parent,
+                                m_link
+                            FROM 
+                                menus 
+                            ORDER BY
+                                m_id,
+                                m_parent                          
+                        """
+            params  = {}
+
+            cursor.execute(query, params)
+            data    = rows_to_dict_list(cursor)            
+
+            message = "Sukses get data master menu."            
+            return responseJSON(200, "T", message, data)
+        except psycopg2.Error as e:
+            message = f"Error query: {str(e)}"
+            return responseJSON(400, "F", message, [])
+        finally:
+            if (cursor):
+                cursor.close()
+    except psycopg2.Error as e:        
+        message = f"Error connection: {str(e)}"
+        return responseJSON(400, "F", message, [])
+    finally:
+        if (conn):            
+            conn.close() 
+
 
