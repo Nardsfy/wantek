@@ -126,7 +126,7 @@ def master_user_edit():
 def master_role(): 
     if request.method == "GET":              
         hasil_data_menu = get_data_menu()
-        v_data  = hasil_data_menu["result"]
+        v_data  = hasil_data_menu["result"]        
         return render_template("master/masterRole.html", menu="Master", data=v_data)
     elif request.method == "POST":
         username    = request.form.get("username", None)    # Mandatory
