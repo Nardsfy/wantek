@@ -307,8 +307,7 @@ def get_data_menu():
                             SELECT        
                                 m_id,
                                 m_desc,
-                                m_level::int, 
-                                m_flag_parent,                               
+                                m_level,                                                             
                                 m_parent,
                                 m_link
                             FROM 

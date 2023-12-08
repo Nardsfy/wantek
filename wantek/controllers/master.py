@@ -126,49 +126,21 @@ def master_user_edit():
 def master_role(): 
     if request.method == "GET":              
         hasil_data_menu = get_data_menu()
+        if (hasil_data_menu["status"] == "F"):
+            message     = hasil_data_menu["message"]        
+            flash_type  = "error"        
+            flash(message, flash_type) 
+
         v_data  = hasil_data_menu["result"]        
         return render_template("master/masterRole.html", menu="Master", data=v_data)
     elif request.method == "POST":
-        username    = request.form.get("username", None)    # Mandatory
-        password    = request.form.get("password", None)    # Mandatory
-        role        = request.form.get("role", None)        # Mandatory
-        status      = request.form.get("status", None)      # Mandatory
-
-        # Validate input data
-        validate    = []
-        if (username in [None, ""]):
-            validate.append("username")
-        # Jika username tidak kosong, validasi username hanya boleh berupa alphanumeric
-        else:
-            if (not username.isalnum()):
-                message     = f"<strong>{username}</strong> hanya boleh berupa karakter atau angka."
-                flash_type  = "danger"
-                flash(message, flash_type)
-                return redirect(url_for("master_user"))
-        if (password in [None, ""]):
-            validate.append("password")            
-        if (role in [None, ""]):
-            validate.append("role")            
-        if (status in [None, ""]):
-            validate.append("status")            
-        if (validate):
-            message     = f"Nilai <strong>{', '.join(validate)}</strong> tidak boleh kosong."
-            flash_type  = "danger"
-            flash(message, flash_type)
-            return redirect(url_for("master_user"))
+        role        = request.form.get("role", None)
+        access_menu = request.form.getlist("access_menu")
+        print("role", role)
+        print("access menu", access_menu)
         
-        # Hash password menggunakan md5
-        hash_password   = md5(password.encode()).hexdigest()
-
-        # Proses insert data user
-        hasil_add_data_user = add_data_user(username, hash_password, role, status, current_user.username)        
-        message     = hasil_add_data_user["message"]
+        message = "Role berhasil ditambahkan."
         flash_type  = "success"
-        if (hasil_add_data_user["status"] == "F"):
-            flash_type  = "error"
-        elif (hasil_add_data_user["status"] == "I"):
-            flash_type  = "warning"            
-        
         flash(message, flash_type)
-        return redirect(url_for("master_user"))
+        return redirect(url_for("master_role"))
 
