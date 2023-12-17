@@ -1,6 +1,12 @@
 {% extends "layout.html" %}
 {% block content %}
 
+<style>
+    ul {
+        list-style-type: none;
+    }
+</style>
+
 <div class="row">
     <div class="col-sm-12">
         <h3>Master role</h3>  
@@ -14,7 +20,7 @@
             <div class="col-sm-12 col-md-4 col-lg-3 mb-2 mb-md-0">
                 <label for="searchrole" class="form-label">Role</label>
                 <input type="text" id="searchrole" class="form-control form-control-sm" name="role" autocomplete="off"
-                    placeholder="role" maxlength="50">
+                    placeholder="role" value="{{ search['role'] }}" maxlength="30">
             </div>            
             <div class="col-sm-12 col-md-12 col-lg-3 mt-3 mt-lg-auto d-flex justify-content-center d-lg-flex justify-content-lg-start">
                 <button class="btn btn-sm text-light btn-form" style="background: var(--main);">
@@ -42,8 +48,10 @@
         <table class="table table-sm table-bordered table-hover text-nowrap">
             <thead class="table-primary">
                 <tr class="text-center align-middle">
+                    <th class="d-none">ID</th>
                     <th>#</th>                                   
                     <th>Role</th>                                  
+                    <th>Status</th>                                  
                     <th>User pembuat</th>
                     <th>Dibuat pada</th>
                     <th>User update</th>
@@ -52,16 +60,40 @@
                 </tr>
             </thead>
             <tbody>
-                <tr class="align-middle">
-                    <td>1</td>
-                    <td>Super user</td>
-                    <td>benny</td>
-                    <td>08 Des 2023 00:00:00</td>
-                    <td></td>
-                    <td></td>
-                </tr>                
+                {% if data|length > 0 %}
+                    {% for role in data %}
+                        <tr class="align-middle">
+                            <td class="d-none">{{ role["r_id"] }}</td>
+                            <td class="text-center">{{ role["index"] }}</td>                            
+                            <td>{{ role["r_desc"] }}</td>
+                            {% if role["r_status"] == "T" %}
+                                <td class="text-center">
+                                    <span class="badge bg-success rounded-pill badge-table" data-value="{{ role['r_status'] }}">Aktif</span>
+                                </td>
+                            {% else %}
+                                <td class="text-center">
+                                    <span class="badge bg-danger rounded-pill badge-table" data-value="{{ role['r_status'] }}">Tidak aktif</span>
+                                </td>
+                            {% endif %}
+                            <td>{{ role["r_ins_user"] }}</td>
+                            <td class="text-center">{{ role["r_ins_date"] }}</td>
+                            <td>{{ role["r_upd_user"] }}</td>
+                            <td class="text-center">{{ role["r_upd_date"] }}</td>
+                            <td>
+                                <span>
+                                    <button class="btn btn-lg py-0 btn-icon" onclick="openModalEditRole(this)"><i class="fas fa-edit text-primary"></i></button>                                
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}  
+                {% else %}
+                    <tr class="text-center align-middle">
+                        <td colspan="8">Data role tidak ditemukan.</td>
+                    </tr>
+                {% endif %}            
             </tbody>
-        </table>        
+        </table>    
+        {{ pagination.links }}    
     </div>  
 </div>
 
@@ -74,50 +106,58 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>        
             <div class="modal-body">
-                <form id="formAddRole" method="POST" action="{{ url_for('master_role') }}">
+                <form id="formAddRole" method="POST" action="{{ url_for('master_role_add') }}">
                     <label for="addRole" class="form-label">Role</label>
-                    <input type="text" id="addRole" class="form-control form-control-sm mb-3" name="role" autocomplete="off" placeholder="role" maxlength="50" required>                    
-                     
+                    <input type="text" id="addRole" class="form-control form-control-sm mb-3" name="role" autocomplete="off" placeholder="role" maxlength="30" required>                                         
                     <label for="addAkses" class="form-label">Akses menu</label>
-                    <div class="card">
-                        <div class="card-body rounded bg-secondary bg-gradient">
-                            <div class="form-check ms-3">
-                                {% set ns = namespace(count=0, comp_level=0, parent='0-00') %}                
-                                {% for i in data %}                                         
-                                    {% set m_parent = i["m_parent"] %}                  
-                                    {% set m_id = i["m_id"] %}    
-                                    {% if not i["m_parent"] %}    
-                                        {% set ns.parent = i["m_id"] %}                              
-                                        <input id="{{ i['m_id'] }}" name="access_menu" value="{{ m_id }}" class="form-check-input" type="checkbox" id="item1" onclick="checkChild('{{ m_id }}', '{{ m_id }}')">
-                                        <label class="form-check-label" for="item1">
-                                            {{ i["m_desc"] }}
-                                        </label>
-                                    {% else %}                
-                                        {% if i["m_level"]|int < ns.comp_level %}                                                                      
-                                            </div>
-                                            </div>                    
-                                        {% endif %}
-                                    <div class="tree-list">
-                                        <div class="form-check">                      
-                                            <input id="{{ i['m_id'] }}" name="access_menu" value="{{ m_id }}" class="form-check-input" type="checkbox" id="item2" data-parent="['{{ i['m_parent'] }}', '{{ns.parent}}']" onclick="checkChild('{{ns.parent}}', '{{ m_id }}')">
-                                            <label class="form-check-label" for="item2">
-                                                {{ i["m_desc"] }}
-                                            </label>                    
-                                        {% if i["m_link"] %}  
-                                            {% set ns.count = ns.count + 1 %}                              
-                                            </div>            
-                                                </div>
-                                        {% endif %}   
-                                                                                        
-                                        {% set ns.comp_level = i["m_level"]|int %}
-                                    {% endif %}            
-                                {% endfor %}                              
-                                </div> 
+                    <div class="card mb-2">
+                        <div class="card-body rounded" style="background: #F7F7F7;">
+                            <!-- List access menu from javascript -->
+                            <div id="addAccessMenu"></div>
                         </div>
-                    </div>
-
+                    </div>                    
+                    <label for="addStatus" class="form-label">Status</label>
+                    <select id="addStatus" class="form-select form-select-sm" name="status">                        
+                        <option value="T" selected>Aktif</option>
+                        <option value="F">Tidak aktif</option>
+                    </select>
                     <div class="modal-footer">
                         <button id="addSimpan" type="submit" class="btn btn-form text-light w-100" style="background: var(--main);">Simpan</button>                    
+                    </div>                    
+                </form>                         
+            </div>     
+        </div>   
+    </div>
+</div>
+
+<!-- Modal Edit Role -->
+<div id="modalEditRole" class="modal fade" data-bs-backdrop="static" tabindex="-1" aria-labelledby="modalEditRoleLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header text-light" style="background: var(--main);">
+                <h5 id="modalEditRoleLabel" class="modal-title">Ubah role</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>        
+            <div class="modal-body">                
+                <form id="formEditRole" method="POST" action="{{ url_for('master_role_edit') }}">
+                    <label for="editIdRole" class="d-none">ID</label>
+                    <input type="text" id="editIdRole" class="d-none" name="id_role" required>                                         
+                    <label for="editRole" class="form-label">Role</label>
+                    <input type="text" id="editRole" class="form-control form-control-sm mb-3" name="role" autocomplete="off" placeholder="role" maxlength="30" required>                                         
+                    <label for="editAkses" class="form-label">Akses menu</label>
+                    <div class="card mb-2">
+                        <div class="card-body rounded" style="background: #F7F7F7;">
+                            <!-- List access menu from javascript -->
+                            <div id="editAccessMenu"></div>
+                        </div>
+                    </div>                    
+                    <label for="editStatus" class="form-label">Status</label>
+                    <select id="editStatus" class="form-select form-select-sm" name="status">                        
+                        <option value="T" selected>Aktif</option>
+                        <option value="F">Tidak aktif</option>
+                    </select>
+                    <div class="modal-footer">
+                        <button id="editSimpan" type="submit" class="btn btn-form text-light w-100" style="background: var(--main);">Simpan</button>                    
                     </div>                    
                 </form>                         
             </div>     
@@ -129,25 +169,198 @@
 
 {% block script %}
 <script type="text/javascript">
-    function checkChild(parent, id) {                                
-        // slice depan id sama check true        
-        $('input[data-parent*="' + id + '"]').prop('checked', $('#' + id).prop('checked'));          
-        $('input[data-parent*="' + id + '"]').prop('disabled', $('#' + id).prop('checked'));
-        
-        if ($('input[data-parent*="' + parent + '"]').length > 0) {
-            if ($('input[data-parent*="' + parent + '"]:checked').length == $('input[data-parent*="' + parent + '"]').length) {
-                $(`#${parent}`).prop("checked", true)
-            } else {
-                $(`#${parent}`).prop("checked", false)
-            }
-        }
-    }
+    $(document).ready(function() {               
+        // Set list access menu checkbox
+        // Replace ' menjadi " untuk mengubah string list menjadi JSON object di Javascript dan replace None value menjadi null        
+        let access_menu = "{{ access_menu|safe }}";        
+        access_menu     = access_menu.replace(/'/g, '"').replace(/None/g, null);
+        access_menu     = JSON.parse(access_menu);
 
-    function submitForm() {
-        let checked = $("input[name=access_menu]:checked").map(function() {
-            return this.value;
-        }).get();
-        console.log(checked)
-    }
+        createCheckboxTree(access_menu, "#addAccessMenu", "add");
+        createCheckboxTree(access_menu, "#editAccessMenu", "edit");
+    });
+
+    // Untuk membuat checkbox menu dari add role
+    function createCheckboxTree(data, container, jenis_form) {
+        // Recursive function to build the tree
+        function buildTree(parent, parentId) {            
+            var children = data.filter(item => item.m_parent === parentId);
+
+            if (children.length > 0) {
+                var ul = $("<ul class='m-0'>");
+                children.forEach(child => {                    
+                    var li = $("<li>");
+                    var checkbox = $("<input type='checkbox' class='me-2' name='access_menu[]' value="+ child.m_id +" data-parent=#menu_"+ jenis_form +"_"+ child.m_parent +">").attr("id", `menu_${jenis_form}_${child.m_id}`);
+                    var label = $("<label>").text(child.m_desc).attr("for", `menu_${jenis_form}_${child.m_id}`);                    
+
+                    li.append(checkbox, label);
+                    ul.append(li);
+
+                    buildTree(li, child.m_id);
+                });
+
+                parent.append(ul);
+            };
+        }
+
+        // Initialize the tree
+        buildTree($(container), null);
+    };
+    
+    // Function untuk set form edit role
+    function openModalEditRole(row) {                        
+        // Mapping value sesuai role yang dipilih
+        let id_role = $(row).closest("tr").find("td:eq(0)").text();
+        let role    = $(row).closest("tr").find("td:eq(2)").text();
+        let status  = $(row).closest("tr").find("td:eq(3)>span").data("value");
+
+        $("#editIdRole").val(id_role);
+        $("#editRole").val(role);
+        $("#editStatus").val(status);
+
+        // Request access menu dari role yang dipilih
+        $.ajax({            
+            url         : "{{ url_for('master_role_get_access_menu') }}",
+            method      : "GET",
+            data        : {
+                id_role : id_role
+            },
+            beforeSend  : showLoading(),
+            success     : function(response) {                
+                hideLoading();
+
+                // Reset checked checkbox terlebih dahulu
+                $("#editAccessMenu input[name='access_menu[]']").prop("checked", false)
+                // Set checked untuk menu yang dapat diakses oleh role sebelumnya
+                for (let menu of response.result) {
+                    $(`#menu_edit_${menu.am_m_id}`).prop("checked", true);
+                };
+            },
+            error       : function(response) {    
+                let category    = "error";
+                let message     = response.responseJSON.message;                                        
+                hideLoading();                
+                alertMessage(category, message);
+            }
+        });
+        
+        // Open edit modal
+        $("#modalEditRole").modal("show");
+    };
+
+    // Check/uncheck checkbox parent/child ketika add role
+    $("#addAccessMenu").on("change", ":checkbox[data-parent]", function () {        
+        $(this).siblings("ul").find(":checkbox").prop("checked", this.checked); 
+        
+        let parent_id   = $(this).data("parent");           
+        let all_checked = $(parent_id).closest("li").find("> ul > li > :checkbox").length === $(parent_id).closest("li").find("> ul > li > :checkbox:checked").length;     
+        $(parent_id).prop("checked", all_checked)
+    });       
+    
+    // Check/uncheck checkbox parent/child ketika edit role
+    $("#editAccessMenu").on("change", ":checkbox[data-parent]", function () {
+        $(this).siblings("ul").find(":checkbox").prop("checked", this.checked); 
+        
+        let parent_id   = $(this).data("parent");                  
+        let all_checked = $(parent_id).closest("li").find("> ul > li > :checkbox").length === $(parent_id).closest("li").find("> ul > li > :checkbox:checked").length;     
+        $(parent_id).prop("checked", all_checked)
+    });      
+
+    // Validasi untuk form tambah role
+    $("#formAddRole").validate({  
+        rules           : {
+            role            : {
+                required        : true,
+                maxlength       : 30
+            },
+            status          : {
+                required        : true
+            }
+        },
+        messages        : {            
+            role            : {
+                required        : "Role tidak boleh kosong.",
+            },
+            status          : {
+                required        : "Status tidak boleh kosong."
+            }
+        },
+        errorPlacement  : function (error, element) {
+            // Custom error placement for Bootstrap
+            error.addClass("invalid-feedback");
+            error.insertAfter(element);
+        },
+        highlight: function (element, errorClass, validClass) {
+            // Add Bootstrap is-invalid class to the form-control element
+            $(element).addClass("is-invalid");
+            // Add error class to the label
+            $(element).prev('label').addClass("is-invalid");
+        },
+        unhighlight: function (element, errorClass, validClass) {
+            // Remove Bootstrap is-invalid class from the form-control element
+            $(element).removeClass("is-invalid");
+            // Remove error class from the label
+            $(element).prev('label').removeClass("is-invalid");
+        },           
+        submitHandler   : function (form) {
+            form.submit();
+        }
+    });
+
+    // Validasi untuk form edit role
+    $("#formEditRole").validate({  
+        rules           : {
+            id_role : {
+                required    : true
+            },
+            role    : {
+                required    : true,
+                maxlength   : 30
+            },
+            status    : {
+                required    : true
+            }
+        },
+        messages        : {
+            id_role : {
+                required    : "ID Role tidak boleh kosong."
+            },
+            role    : {
+                required    : "Role tidak boleh kosong.",
+                maxlength   : "Role tidak boleh lebih dari {0} karakter."
+            },
+            status    : {
+                required    : "Status tidak boleh kosong."
+            }
+        },
+        errorPlacement  : function (error, element) {
+            // Custom error placement for Bootstrap
+            error.addClass("invalid-feedback");
+            error.insertAfter(element);
+        },
+        highlight: function (element, errorClass, validClass) {
+            // Add Bootstrap is-invalid class to the form-control element
+            $(element).addClass("is-invalid");
+            // Add error class to the label
+            $(element).prev('label').addClass("is-invalid");
+        },
+        unhighlight: function (element, errorClass, validClass) {
+            // Remove Bootstrap is-invalid class from the form-control element
+            $(element).removeClass("is-invalid");
+            // Remove error class from the label
+            $(element).prev('label').removeClass("is-invalid");
+        }                   
+    });
+    
+    // Submit form edit
+    $("#formEditRole").submit(function(e) {
+        e.preventDefault();
+
+        let title       = "Konfirmasi";
+        let message     = "Apakah data role yang diubah sudah sesuai?";
+        formConfirmationDialog(title, message, function(){
+            $("#formEditRole").get(0).submit();
+        })
+    })
 </script>
 {% endblock script %}

@@ -1,6 +1,7 @@
-from flask import render_template
-from flask_login import login_required
+from flask import flash, render_template
+from flask_login import current_user, login_required
 from wantek import app
+from wantek.dao.userDao import get_list_akses_menu
 
 @app.route("/", methods=["GET"])
 @login_required
@@ -9,12 +10,31 @@ def home():
 
 @app.context_processor
 def global_var():
-    # Function global var for Jinja2    
+    # Function global var for Jinja2
+
+    # Set akses menu untuk navbar
+    organized_menu = {}
+    if (current_user.is_authenticated):
+        hasil_get_list_akses_menu   = get_list_akses_menu(current_user.role)
+        if (hasil_get_list_akses_menu["status"] == "F"):
+            message     = hasil_get_list_akses_menu["message"]
+            flash_type  = "error"
+            flash(message, flash_type)
+        list_akses_menu     = hasil_get_list_akses_menu["result"] 
+        # Set children dari menu
+        for menu in list_akses_menu:
+            menu_id, menu_desc, menu_parent, menu_link = menu.values()
+            if (menu_parent is None):
+                organized_menu[menu_id] = {"desc": menu_desc, "link": menu_link, "children": []}
+            else:
+                organized_menu[menu_parent]["children"].append({"id": menu_id, "desc": menu_desc, "link": menu_link})
+
     return dict(
         APP_NAME    = app.config["APP_NAME"],
         APP_INITIAL = app.config["APP_INITIAL"],
         COPYRIGHT   = app.config["COPYRIGHT"],
-        VERSION     = app.config["VERSION"]
+        VERSION     = app.config["VERSION"],
+        AKSES_MENU  = organized_menu
     )
 
 @app.errorhandler(403)

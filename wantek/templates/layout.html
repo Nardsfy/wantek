@@ -57,27 +57,28 @@
             </button>
             <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
                 <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a id="dropdown-master" class="nav-link dropdown-toggle {{ 'active' if 'Master' in menu }}" href="#" data-bs-toggle="dropdown" aria-expanded="false">Master</a>
-                        <ul class="dropdown-menu" aria-labelledby="dropdown-master">
-                            <li><a class="dropdown-item" href="{{ url_for('master_user') }}">Master user</a></li>    
-                            <li><a class="dropdown-item" href="{{ url_for('master_role') }}">Master role</a></li>    
-                            <li><hr class="dropdown-divider"></li>                        
-                            <li><a class="dropdown-item" href="{{ url_for('master_user') }}">Master warna</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Transaksi</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Report</a>
-                    </li>
+                    {% for menu_id, menu_info in AKSES_MENU.items() %}                    
+                        {% if menu_info["children"] %}
+                        <li class="nav-item dropdown">
+                            <a id="navbarDropdown_{{ menu_id }}" class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">{{ menu_info["desc"] }}</a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown_{{ menu_id }}">
+                                {% for child in menu_info["children"] %}
+                                <li><a class="dropdown-item" href="{{ child['link'] }}">{{ child["desc"] }}</a></li>                                        
+                                {% endfor %}
+                            </ul>
+                        </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ menu_info['link'] }}">{{ menu_info["desc"] }}</a>
+                        </li>
+                        {% endif %}                        
+                    {% endfor %}                    
                 </ul>
                 <ul class="navbar-nav me-5">
                     <li class="nav-item dropdown">                                                 
                         <a id="dropdown-user" class="nav-link dropdown-toggle active" href="#" data-bs-toggle="dropdown" aria-expanded="false">{{ current_user.username|capitalize }}</a>                           
                         <ul class="dropdown-menu" aria-labelledby="dropdown-user">
-                            <li><a class="dropdown-item py-0" href="{{ url_for('logout') }}">Logout</a></li>                                
+                            <li><a class="dropdown-item py-0" href="{{ url_for('logout') }}">Logout</a></li>                                                                                         
                         </ul>
                     </li>
                 </ul>
@@ -85,7 +86,7 @@
         </div>
     </nav>    
 
-    <div class="container mt-2">        
+    <div class="container mt-2 mb-5">        
         {% block content %}{% endblock content %}
     </div>
 
@@ -123,6 +124,24 @@
             });
         };
 
+        function formConfirmationDialog(title, message, callback) {                                  
+            Swal.fire({
+                icon                : "question",
+                title               : title,                
+                html                : `<p class="alert alert-info p-2">${message}</p>`,                
+                confirmButtonText   : "Ya",
+                confirmButtonColor  : "var(--main)",
+                showCancelButton    : true,                
+                cancelButtonText    : "Tidak",
+                allowOutsideClick   : false,
+                position            : "top"
+            }).then((result) => {
+                if (result.isConfirmed) {                                        
+                    callback();
+                }
+            });        
+        };
+
         function validateAlnum(event, format_text) {            
             // Get the pressed key
             let key = event.key;
@@ -155,6 +174,22 @@
             }
         };
         
+        function showLoading() {
+            Swal.fire({
+                title               : "Loading...",
+                allowEscapeKey      : false,
+                allowOutsideClick   : false,
+                showCancelButton    : false,
+                showConfirmButton   : false,
+                didOpen        : () => {
+                    Swal.showLoading();
+                }
+            });            
+        };
+
+        function hideLoading() {
+            Swal.close();
+        };
     </script>   
 
     {% block script %}

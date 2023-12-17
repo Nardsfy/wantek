@@ -25,4 +25,5 @@ def connectionDB():
     return conn
 
 # Declare route controller application
-from wantek.controllers import (routes, validate, user, master)
+from wantek.controllers import (routes, validate, user)
+from wantek.controllers.master import (masterUser, masterRole)

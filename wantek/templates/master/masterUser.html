@@ -11,13 +11,13 @@
     <!-- Search form -->
     <form class="col-sm-12 mb-4" method="GET" action="{{ url_for('master_user') }}">
         <div class="row">
-            <div class="col-sm-12 col-md-4 col-lg-3 mb-2 mb-md-0">
+            <div class="col-sm-12 col-md-6 col-lg-3 mb-2 mb-md-2">
                 <label for="searchUsername" class="form-label">Username</label>
                 <input type="text" id="searchUsername" class="form-control form-control-sm" name="username" autocomplete="off"
                     placeholder="username" maxlength="12" value="{{ search['username'] }}" 
                     onkeypress="validateAlnum(event, 'lower')">
             </div>
-            <div class="col-sm-12 col-md-4 col-lg-3 mb-2 mb-md-0">
+            <div class="col-sm-12 col-md-6 col-lg-3 mb-2 mb-md-2">
                 <label for="searchRole" class="form-label">Role</label>
                 <select id="searchRole" class="form-select form-select-sm" name="role">
                     <option value="" selected>-- Pilih role --</option>
@@ -25,8 +25,17 @@
                     <option value="{{ role['r_id'] }}" {{ "selected" if search["role"] == role["r_id"] }}>{{ role["r_desc"] }}</option>                    
                     {% endfor %}
                 </select>
+            </div>            
+            <div class="col-sm-12 col-md-6 col-lg-3 mb-2 mb-md-0">
+                <label for="searchCabang" class="form-label">Cabang</label>
+                <select id="searchCabang" name="cabang" class="form-select form-select-sm">
+                    <option value="" selected>-- Pilih cabang --</option>
+                    {% for cabang in list_cabang %}
+                    <option value="{{ cabang['c_id'] }}" {{ "selected" if search["cabang"] == cabang["c_id"] }}>{{ cabang["c_id"] }} - {{ cabang["c_desc"] }}</option>                    
+                    {% endfor %}
+                </select>
             </div>
-            <div class="col-sm-12 col-md-4 col-lg-3">
+            <div class="col-sm-12 col-md-6 col-lg-3">
                 <label for="searchStatus" class="form-label">Status</label>
                 <select id="searchStatus" class="form-select form-select-sm" name="status">
                     <option value="">-- Pilih status --</option>
@@ -34,7 +43,7 @@
                     <option value="F" {{ "selected" if search["status"] == "F" }}>Tidak aktif</option>
                 </select>
             </div>
-            <div class="col-sm-12 col-md-12 col-lg-3 mt-3 mt-lg-auto d-flex justify-content-center d-lg-flex justify-content-lg-start">
+            <div class="col-sm-12 mt-3 mt-lg-2 d-flex justify-content-center d-lg-flex justify-content-lg-end">
                 <button class="btn btn-sm text-light btn-form" style="background: var(--main);">
                     <span>
                         Cari
@@ -63,6 +72,7 @@
                     <th>#</th>
                     <th>Username</th>                
                     <th>Role</th>
+                    <th>Cabang</th>
                     <th>Status</th>                
                     <th>User pembuat</th>
                     <th>Dibuat pada</th>
@@ -78,14 +88,15 @@
                         <td class="text-center">{{ user["index"] }}</td>
                         <td>{{ user["u_username"] }}</td>                
                         <td class="text-center" data-value="{{ user['u_role'] }}">{{ user["role_desc"] }}</td>
+                        <td class="text-center" data-value="{{ user['u_cabang'] }}">{{ user["cabang_desc"] }}</td>
                         {% if user["u_status"] == "T" %}
-                        <td class="text-center">
-                            <span class="badge bg-success rounded-pill badge-table" data-value="{{ user['u_status'] }}">Aktif</span>
-                        </td>
+                            <td class="text-center">
+                                <span class="badge bg-success rounded-pill badge-table" data-value="{{ user['u_status'] }}">Aktif</span>
+                            </td>
                         {% else %}
-                        <td class="text-center">
-                            <span class="badge bg-danger rounded-pill badge-table" data-value="{{ user['u_status'] }}">Tidak aktif</span>
-                        </td>
+                            <td class="text-center">
+                                <span class="badge bg-danger rounded-pill badge-table" data-value="{{ user['u_status'] }}">Tidak aktif</span>
+                            </td>
                         {% endif %}
                         <td>{{ user["u_ins_user"] }}</td>
                         <td class="text-center">{{ user["u_ins_date"] }}</td>
@@ -118,17 +129,23 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>        
             <div class="modal-body">
-                <form id="formAddUser" method="POST" action="{{ url_for('master_user') }}">
+                <form id="formAddUser" method="POST" action="{{ url_for('master_user_add') }}">
                     <label for="addUsername" class="form-label">Username</label>
                     <input type="text" id="addUsername" class="form-control form-control-sm mb-3" name="username" autocomplete="off" placeholder="username" maxlength="12" onkeypress="validateAlnum(event, 'lower')" required>
                     <label for="addPassword" class="form-label">Password</label>
                     <input type="password" id="addPassword" class="form-control form-control-sm mb-3" name="password" placeholder="password" minlength="6" maxlength="20" required>                    
                     <label for="addRole" class="form-label">Role</label>
-                    <select id="addRole" class="form-select form-select-sm mb-3" name="role">                        
+                    <select id="addRole" class="form-select form-select-sm mb-3" name="role" required>                        
                         {% for role in roles %}
                         <option value="{{ role['r_id'] }}">{{ role["r_desc"] }}</option>                    
                         {% endfor %}
-                    </select>                                        
+                    </select>   
+                    <label for="addCabang" class="form-label">Cabang</label>
+                    <select id="addCabang" class="form-select form-select-sm mb-3" name="cabang" required>                        
+                        {% for cabang in list_cabang %}
+                        <option value="{{ cabang['c_id'] }}">{{ cabang["c_id"] }} - {{ cabang["c_desc"] }}</option>                    
+                        {% endfor %}
+                    </select>                                     
                     <label for="addStatus" class="form-label">Status</label>
                     <select id="addStatus" class="form-select form-select-sm" name="status">                        
                         <option value="T" selected>Aktif</option>
@@ -160,6 +177,12 @@
                         {% for role in roles %}
                         <option value="{{ role['r_id'] }}">{{ role["r_desc"] }}</option>                    
                         {% endfor %}
+                    </select>
+                    <label for="editCabang" class="form-label">Cabang</label>
+                    <select id="editCabang" class="form-select form-select-sm mb-3" name="cabang" required>                        
+                        {% for cabang in list_cabang %}
+                        <option value="{{ cabang['c_id'] }}">{{ cabang["c_id"] }} - {{ cabang["c_desc"] }}</option>                    
+                        {% endfor %}
                     </select>                                        
                     <label for="editStatus" class="form-label">Status</label>
                     <select id="editStatus" class="form-select form-select-sm" name="status">                        
@@ -183,9 +206,11 @@
     function openModalEditUser(row) {        
         let username    = $(row).closest("tr").find("td:eq(1)").text();
         let role        = $(row).closest("tr").find("td:eq(2)").data("value");
-        let status      = $(row).closest("tr").find("td:eq(3)>span").data("value");               
+        let cabang      = $(row).closest("tr").find("td:eq(3)").data("value");
+        let status      = $(row).closest("tr").find("td:eq(4)>span").data("value");               
         $("#editUsername").val(username);
         $("#editRole").val(role);
+        $("#editCabang").val(cabang);
         $("#editStatus").val(status);
 
         $("#modalEditUser").modal("show");
@@ -202,6 +227,15 @@
                 required    : true,
                 minlength   : 6,
                 maxlength   : 20
+            },
+            role        : {
+                required    : true
+            },
+            cabang      : {
+                required    : true
+            },
+            status      : {
+                required    : true
             }
         },
         messages        : {
@@ -213,6 +247,15 @@
                 required        : "Password tidak boleh kosong.",
                 minlength       : "Password setidaknya memiliki {0} karakter.",
                 maxlength       : "Password tidak boleh lebih dari {0} karakter."
+            },
+            role            : {
+                required        : "Role tidak boleh kosong.",
+            },
+            cabang          : {
+                required        : "Cabang tidak boleh kosong."
+            },
+            status          : {
+                required        : "Status tidak boleh kosong."
             }
         },
         errorPlacement  : function (error, element) {
@@ -235,6 +278,68 @@
         submitHandler   : function (form) {
             form.submit();
         }
+    });
+
+    // Validasi untuk form edit user
+    $("#formEditUser").validate({  
+        rules           : {
+            username    : {
+                required    : true,
+                maxlength   : 12
+            },
+            role        : {
+                required    : true
+            },
+            cabang      : {
+                required    : true
+            },
+            status      : {
+                required    : true
+            }
+        },
+        messages        : {
+            username        : {
+                required        : "Username tidak boleh kosong.",
+                maxlength       : "Username tidak boleh lebih dari {0} karakter."
+            },
+            role            : {
+                required        : "Role tidak boleh kosong.",
+            },
+            cabang          : {
+                required        : "Cabang tidak boleh kosong."
+            },
+            status          : {
+                required        : "Status tidak boleh kosong."
+            }
+        },
+        errorPlacement  : function (error, element) {
+            // Custom error placement for Bootstrap
+            error.addClass("invalid-feedback");
+            error.insertAfter(element);
+        },
+        highlight: function (element, errorClass, validClass) {
+            // Add Bootstrap is-invalid class to the form-control element
+            $(element).addClass("is-invalid");
+            // Add error class to the label
+            $(element).prev('label').addClass("is-invalid");
+        },
+        unhighlight: function (element, errorClass, validClass) {
+            // Remove Bootstrap is-invalid class from the form-control element
+            $(element).removeClass("is-invalid");
+            // Remove error class from the label
+            $(element).prev('label').removeClass("is-invalid");
+        }                   
+    });
+
+    // Submit form edit
+    $("#formEditUser").submit(function(e) {
+        e.preventDefault();
+
+        let title       = "Konfirmasi";
+        let message     = "Apakah data user yang diubah sudah sesuai?";
+        formConfirmationDialog(title, message, function(){
+            $("#formEditUser").get(0).submit();
+        })
     });
 </script>
 {% endblock script %}

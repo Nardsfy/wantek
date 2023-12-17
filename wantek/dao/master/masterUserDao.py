@@ -16,7 +16,10 @@ def get_data_role():
                                 r_id,
                                 r_desc
                             FROM 
-                                roles                            
+                                roles
+                            WHERE
+                                r_status = 'T'
+                            ORDER BY r_desc                            
                         """
             params  = {}
 
@@ -38,7 +41,45 @@ def get_data_role():
         if (conn):            
             conn.close() 
 
-def get_data_user(p_username, p_status, p_role, p_offset, p_limit):
+def get_data_cabang():
+    """ Get data cabang """    
+    
+    conn    = None
+    try:
+        cursor  = None        
+        conn    = connectionDB()
+        try:
+            cursor  = conn.cursor()
+            query   =   """
+                            SELECT        
+                                c_id,
+                                INITCAP(c_desc) c_desc
+                            FROM 
+                                cabang
+                            ORDER BY c_desc                           
+                        """
+            params  = {}
+
+            cursor.execute(query, params)
+            data    = rows_to_dict_list(cursor)            
+
+            message = "Sukses get data master cabang."            
+            return responseJSON(200, "T", message, data)
+        except psycopg2.Error as e:
+            message = f"Error query: {str(e)}"
+            return responseJSON(400, "F", message, [])
+        finally:
+            if (cursor):
+                cursor.close()
+    except psycopg2.Error as e:        
+        message = f"Error connection: {str(e)}"
+        return responseJSON(400, "F", message, [])
+    finally:
+        if (conn):            
+            conn.close() 
+
+
+def get_data_user(p_username, p_status, p_role, p_cabang, p_offset, p_limit):
     """ Get data master user  """
     def count_data_user(cursor):
         try:
@@ -46,9 +87,19 @@ def get_data_user(p_username, p_status, p_role, p_offset, p_limit):
                             SELECT        
                                 COUNT(1) count
                             FROM 
-                                users u                            
+                                users u 
+                            WHERE
+                                (LOWER (u_username) LIKE '%%'||LOWER (%(username)s)||'%%' OR %(username)s IS NULL OR %(username)s = '')
+                                AND (u_role = %(role)s OR %(role)s IS NULL OR %(role)s = '')
+                                AND (u_status = %(status)s OR %(status)s IS NULL OR %(status)s = '')
+                                AND (u_cabang = %(cabang)s OR %(cabang)s IS NULL OR %(cabang)s = '')                           
                         """
-            params  = {}
+            params  = {
+                "username"  : p_username,
+                "role"      : p_role,
+                "status"    : p_status,
+                "cabang"    : p_cabang
+            }
             cursor.execute(query, params)
             data    = rows_to_dict_list(cursor)
 
@@ -73,6 +124,8 @@ def get_data_user(p_username, p_status, p_role, p_offset, p_limit):
                                 u_password,
                                 u_role,
                                 r.r_desc role_desc,
+                                u_cabang,
+                                INITCAP(c.c_desc) cabang_desc,
                                 u_status,
                                 TO_CHAR(u_ins_date, 'dd Mon yyyy HH24:MI:SS') u_ins_date,
                                 u_ins_user,
@@ -83,10 +136,14 @@ def get_data_user(p_username, p_status, p_role, p_offset, p_limit):
                             LEFT JOIN roles r ON (
                                 u.u_role = r.r_id
                             )
+                            LEFT JOIN cabang c ON (
+                                u.u_cabang = c.c_id
+                            )
                             WHERE
                                 (LOWER (u_username) LIKE '%%'||LOWER (%(username)s)||'%%' OR %(username)s IS NULL OR %(username)s = '')
                                 AND (u_role = %(role)s OR %(role)s IS NULL OR %(role)s = '')
                                 AND (u_status = %(status)s OR %(status)s IS NULL OR %(status)s = '')
+                                AND (u_cabang = %(cabang)s OR %(cabang)s IS NULL OR %(cabang)s = '')
                             ORDER BY u_status DESC, u_username
                             OFFSET %(offset)s
                             LIMIT %(limit)s
@@ -95,6 +152,7 @@ def get_data_user(p_username, p_status, p_role, p_offset, p_limit):
                 "username"  : p_username,
                 "role"      : p_role,
                 "status"    : p_status,
+                "cabang"    : p_cabang,
                 "offset"    : p_offset,
                 "limit"     : p_limit
             }
@@ -126,7 +184,7 @@ def get_data_user(p_username, p_status, p_role, p_offset, p_limit):
         if (conn):            
             conn.close() 
 
-def add_data_user(p_username, p_password, p_role, p_status, p_user_login):
+def add_data_user(p_username, p_password, p_role, p_cabang, p_status, p_user_login):
     """ Insert data user """  
     def cek_user(cursor, username): 
         try:
@@ -137,7 +195,7 @@ def add_data_user(p_username, p_password, p_role, p_status, p_user_login):
                                 FROM
                                     users
                                 WHERE
-                                    u_username = %(username)s
+                                    LOWER(u_username) = LOWER(%(username)s)
                             )              
                         """
             params  = {
@@ -176,12 +234,14 @@ def add_data_user(p_username, p_password, p_role, p_status, p_user_login):
                                     u_username,
                                     u_password,
                                     u_role,
+                                    u_cabang,
                                     u_status,
                                     u_ins_user
                                 ) VALUES (
                                     LOWER (%(username)s),
                                     %(password)s,
                                     %(role)s,
+                                    %(cabang)s,
                                     %(status)s,
                                     %(user_login)s
                                 )                          
@@ -190,6 +250,7 @@ def add_data_user(p_username, p_password, p_role, p_status, p_user_login):
                 "username"      : p_username,
                 "password"      : p_password,
                 "role"          : p_role,
+                "cabang"        : p_cabang,
                 "status"        : p_status,
                 "user_login"    : p_user_login
             }
@@ -200,30 +261,35 @@ def add_data_user(p_username, p_password, p_role, p_status, p_user_login):
             message = f"User <strong>{p_username}</strong> berhasil ditambahkan."            
             return responseJSON(200, "T", message, [])
         except psycopg2.Error as e:
+            if (conn):
+                conn.rollback()
             message = f"Error query: {str(e)}"
             return responseJSON(400, "F", message, [])
         finally:
             if (cursor):
                 cursor.close()
     except psycopg2.Error as e:        
+        if (conn):
+            conn.rollback()
         message = f"Error connection: {str(e)}"
         return responseJSON(400, "F", message, [])
     finally:
         if (conn):            
             conn.close() 
 
-def edit_data_user(p_username, p_role, p_status, p_user_login):
+def edit_data_user(p_username, p_role, p_cabang, p_status, p_user_login):
     """ Update data user """  
     def get_data_user_cek(cursor, username): 
         try:
             query   =   """
                             SELECT
                                 u_role,
+                                u_cabang,
                                 u_status
                             FROM
                                 users
                             WHERE
-                                u_username = %(username)s              
+                                LOWER(u_username) = LOWER(%(username)s)
                         """
             params  = {
                 "username"  : username
@@ -253,8 +319,9 @@ def edit_data_user(p_username, p_role, p_status, p_user_login):
             if (not hasil_get_data_user_cek["result"]):
                 return responseJSON(400, "F", f"User <strong>{p_username}</strong> tidak ditemukan.", [])            
             cek_role    = hasil_get_data_user_cek["result"][0]["u_role"]
+            cek_cabang  = hasil_get_data_user_cek["result"][0]["u_cabang"]
             cek_status  = hasil_get_data_user_cek["result"][0]["u_status"]            
-            if (cek_role == p_role and cek_status == p_status):
+            if (cek_role == p_role and cek_cabang == p_cabang and cek_status == p_status):
                 message = f"Tidak ada data yang diubah untuk user <strong>{p_username}</strong>."
                 return responseJSON(400, "I", message, [])
             
@@ -263,6 +330,7 @@ def edit_data_user(p_username, p_role, p_status, p_user_login):
                             UPDATE users 
                             SET                                
                                 u_role      = %(role)s,
+                                u_cabang    = %(cabang)s,
                                 u_status    = %(status)s,
                                 u_upd_date  = CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta',
                                 u_upd_user  = %(user_login)s                                                                          
@@ -272,6 +340,7 @@ def edit_data_user(p_username, p_role, p_status, p_user_login):
             params  = {
                 "username"      : p_username,                
                 "role"          : p_role,
+                "cabang"        : p_cabang,
                 "status"        : p_status,
                 "user_login"    : p_user_login
             }
@@ -282,58 +351,18 @@ def edit_data_user(p_username, p_role, p_status, p_user_login):
             message = f"User <strong>{p_username}</strong> berhasil diubah."            
             return responseJSON(200, "T", message, [])
         except psycopg2.Error as e:
+            if (conn):
+                conn.rollback()
             message = f"Error query: {str(e)}"
             return responseJSON(400, "F", message, [])
         finally:
             if (cursor):
                 cursor.close()
-    except psycopg2.Error as e:        
+    except psycopg2.Error as e: 
+        if (conn):
+            conn.rollback()       
         message = f"Error connection: {str(e)}"
         return responseJSON(400, "F", message, [])
     finally:
         if (conn):            
             conn.close() 
-
-def get_data_menu():
-    """ Get data menu """    
-    
-    conn    = None
-    try:
-        cursor  = None        
-        conn    = connectionDB()
-        try:
-            cursor  = conn.cursor()
-            query   =   """
-                            SELECT        
-                                m_id,
-                                m_desc,
-                                m_level,                                                             
-                                m_parent,
-                                m_link
-                            FROM 
-                                menus 
-                            ORDER BY
-                                m_id,
-                                m_parent                          
-                        """
-            params  = {}
-
-            cursor.execute(query, params)
-            data    = rows_to_dict_list(cursor)            
-
-            message = "Sukses get data master menu."            
-            return responseJSON(200, "T", message, data)
-        except psycopg2.Error as e:
-            message = f"Error query: {str(e)}"
-            return responseJSON(400, "F", message, [])
-        finally:
-            if (cursor):
-                cursor.close()
-    except psycopg2.Error as e:        
-        message = f"Error connection: {str(e)}"
-        return responseJSON(400, "F", message, [])
-    finally:
-        if (conn):            
-            conn.close() 
-
-
