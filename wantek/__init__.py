@@ -17,10 +17,11 @@ login_manager.login_message_category    = "danger"
 
 def connectionDB():
     conn = psycopg2.connect(
-        host        = app.config['HOST_DB'],
-        database    = app.config['DATABASE_DB'],
-        user        = app.config['USER_DB'],
-        password    = app.config['PASSWORD_DB']
+        host        = app.config["HOST_DB"],
+        dbname      = app.config["DATABASE_DB"],
+        port        = app.config["PORT_DB"],
+        user        = app.config["USER_DB"],
+        password    = app.config["PASSWORD_DB"]
     )
     return conn
 

@@ -11,5 +11,6 @@ LIMIT_DATA_MASTER   = 10
 # Config database
 HOST_DB     = "localhost"
 DATABASE_DB = "postgres"
+PORT_DB     = "5432"
 USER_DB     = "postgres"
 PASSWORD_DB = "root"

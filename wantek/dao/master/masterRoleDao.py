@@ -88,7 +88,7 @@ def get_data_role(p_role, p_offset, p_limit):
 def add_access_menu(cursor, p_access_menu, p_id_role, p_user_login): # Execute no commit
     """ Insert access menu dari roles, ketika insert role atau update role """
     try:
-        for access_menu in p_access_menu:                
+        for access_menu in p_access_menu:                            
             query   =   """
                             INSERT INTO access_menu (
                                 am_r_id,
@@ -126,7 +126,7 @@ def add_access_menu(cursor, p_access_menu, p_id_role, p_user_login): # Execute n
                 cursor.execute(query, params)
                 data    = rows_to_dict_list(cursor)
                 menu_parent     = data[0]["m_parent"]                
-                menu_has_parent = menu_parent is not None    
+                menu_has_parent = menu_parent is not None                  
 
                 # Jika menu memiliki parent, maka insert menu_parent 
                 if (menu_has_parent):
@@ -398,24 +398,42 @@ def edit_data_role(p_id_role, p_role, p_access_menu, p_status, p_user_login):
                 return hasil_get_data_role_cek
             if (not hasil_get_data_role_cek["result"]):
                 return responseJSON(400, "F", f"Role <strong>{p_role.capitalize()}</strong> tidak ditemukan.", [])                        
+            
             access_menu_is_updated  = False
+            access_menu_with_parent = p_access_menu[:]
+            access_menu_before      = []
+            # Update list access_menu dari front-end dengan menu parentnya
+            for access_menu in p_access_menu:                
+                menu_parent = access_menu
+                while menu_parent is not None:                    
+                    # Cek apakah menu memiliki parent
+                    query   =   """
+                                    SELECT        
+                                        m_id,                                                                                                                               
+                                        m_parent                                
+                                    FROM 
+                                        menus
+                                    WHERE 
+                                        m_id = %(access_menu)s                         
+                                """
+                    params  = {
+                        "access_menu"   : menu_parent
+                    }
+                    cursor.execute(query, params)
+                    data    = rows_to_dict_list(cursor)
+                    menu_parent     = data[0]["m_parent"]                
+                    menu_has_parent = menu_parent is not None
+                    if (menu_has_parent is True):
+                        access_menu_with_parent.append(menu_parent)
+            
+            # Tampung access_menu pada role sebelumnya
             for cek_data_role in hasil_get_data_role_cek["result"]: 
-                # Jika tidak ada data access menu sebelumnya
-                if (cek_data_role["am_m_id"] is None):                    
-                    if (p_access_menu):
-                        access_menu_is_updated  = True
-                        break
-                    else:
-                        access_menu_is_updated  = False
-                # Jika ada data access menu sebelumnya
-                else:
-                    # Jika jumlah access menu yang terdaftar sesuai dengan jumlah checkbox access menu yang dipilih, cek ada perubahan atau tidak
-                    if (len(hasil_get_data_role_cek["result"]) == len(p_access_menu)):                        
-                        access_menu_is_updated  = cek_data_role["am_m_id"] not in p_access_menu
-                    else:
-                        access_menu_is_updated  = True
-                    if (access_menu_is_updated is True):
-                        break
+                menu_id     = cek_data_role["am_m_id"]
+                if (menu_id is not None):
+                    access_menu_before.append(cek_data_role["am_m_id"])
+            
+            if (access_menu_with_parent != access_menu_before):
+                access_menu_is_updated  = True
 
             cek_role        = hasil_get_data_role_cek["result"][0]["r_desc"]
             cek_status      = hasil_get_data_role_cek["result"][0]["r_status"]            
