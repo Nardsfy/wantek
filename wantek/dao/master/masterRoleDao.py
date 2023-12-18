@@ -85,6 +85,75 @@ def get_data_role(p_role, p_offset, p_limit):
         if (conn):            
             conn.close() 
 
+def add_access_menu(cursor, p_access_menu, p_id_role, p_user_login): # Execute no commit
+    """ Insert access menu dari roles, ketika insert role atau update role """
+    try:
+        for access_menu in p_access_menu:                
+            query   =   """
+                            INSERT INTO access_menu (
+                                am_r_id,
+                                am_m_id,
+                                am_upd_user                                
+                            ) VALUES (
+                                %(id_role)s,
+                                %(access_menu)s,
+                                %(user_login)s
+                            )
+                        """
+            params  = {
+                "id_role"       : p_id_role,
+                "access_menu"   : access_menu,
+                "user_login"    : p_user_login
+            }
+            cursor.execute(query, params)
+
+            # Insert parent menu dari access menu
+            menu_parent = access_menu
+            while menu_parent is not None:                    
+                # Cek apakah menu memiliki parent
+                query   =   """
+                                SELECT        
+                                    m_id,                                                                                                                               
+                                    m_parent                                
+                                FROM 
+                                    menus
+                                WHERE 
+                                    m_id = %(access_menu)s                         
+                            """
+                params  = {
+                    "access_menu"   : menu_parent
+                }
+                cursor.execute(query, params)
+                data    = rows_to_dict_list(cursor)
+                menu_parent     = data[0]["m_parent"]                
+                menu_has_parent = menu_parent is not None    
+
+                # Jika menu memiliki parent, maka insert menu_parent 
+                if (menu_has_parent):
+                    query       =   """
+                                        INSERT INTO access_menu (
+                                            am_r_id,
+                                            am_m_id,
+                                            am_upd_user                                   
+                                        ) VALUES (
+                                            %(id_role)s,                                                
+                                            %(access_menu)s,
+                                            %(user_login)s
+                                        ) ON CONFLICT ON CONSTRAINT access_menu_pk
+                                            DO NOTHING
+                                """
+                    params      = {                
+                        "id_role"       : p_id_role,                
+                        "access_menu"   : menu_parent,
+                        "user_login"    : p_user_login
+                    }
+                    cursor.execute(query, params)
+
+        message     = "Suskes insert access menu role."
+        return responseJSON(200, "T", message, [])
+    except psycopg2.Error as e:
+        message = f"Error query: {str(e)}"
+        return responseJSON(400, "F", message, []) 
 
 def get_data_menu():
     """ Get data menu """    
@@ -217,67 +286,10 @@ def add_data_role(p_role, p_status, p_access_menu, p_user_login):
             }
             cursor.execute(query, params)
 
-            # Insert access menu
-            for access_menu in p_access_menu:                                    
-                query       =   """
-                                    INSERT INTO access_menu (
-                                        am_r_id,
-                                        am_m_id,
-                                        am_upd_user                                   
-                                    ) VALUES (
-                                        %(id_role)s,                                        
-                                        %(access_menu)s,
-                                        %(user_login)s
-                                    ) ON CONFLICT ON CONSTRAINT access_menu_pk
-                                        DO NOTHING
-                            """
-                params      = {   
-                    "id_role"       : id_role,                                                 
-                    "access_menu"   : access_menu,
-                    "user_login"    : p_user_login
-                }
-                cursor.execute(query, params)
-
-                menu_parent = access_menu
-                while menu_parent is not None:                    
-                    # Cek apakah menu memiliki parent
-                    query   =   """
-                                    SELECT        
-                                        m_id,                                                                                                                               
-                                        m_parent                                
-                                    FROM 
-                                        menus
-                                    WHERE 
-                                        m_id = %(access_menu)s                         
-                                """
-                    params  = {
-                        "access_menu"   : menu_parent
-                    }
-                    cursor.execute(query, params)
-                    data    = rows_to_dict_list(cursor)
-                    menu_parent     = data[0]["m_parent"]                
-                    menu_has_parent = menu_parent is not None    
-
-                    # Jika menu memiliki parent, maka insert menu_parent 
-                    if (menu_has_parent):
-                        query       =   """
-                                            INSERT INTO access_menu (
-                                                am_r_id,
-                                                am_m_id,
-                                                am_upd_user                                   
-                                            ) VALUES (
-                                                %(id_role)s,                                                
-                                                %(access_menu)s,
-                                                %(user_login)s
-                                            ) ON CONFLICT ON CONSTRAINT access_menu_pk
-                                                DO NOTHING
-                                    """
-                        params      = {                
-                            "id_role"       : id_role,                
-                            "access_menu"   : menu_parent,
-                            "user_login"    : p_user_login
-                        }
-                        cursor.execute(query, params)                        
+            # Insert access menu dari role
+            hasil_add_access_menu   = add_access_menu(cursor, p_access_menu, id_role, p_user_login)
+            if (hasil_add_access_menu["status"] == "F"):
+                return hasil_add_access_menu                        
 
             conn.commit()                      
 
@@ -389,17 +401,24 @@ def edit_data_role(p_id_role, p_role, p_access_menu, p_status, p_user_login):
             
             # Cek apakah ada data yang diupdate atau tidak
             access_menu_is_updated  = False
-            for cek_data_role in hasil_get_data_role_cek["result"]:     
-                if (cek_data_role["am_m_id"] is None):
+            for cek_data_role in hasil_get_data_role_cek["result"]: 
+                # Jika tidak ada data access menu sebelumnya
+                if (cek_data_role["am_m_id"] is None):                    
                     if (p_access_menu):
                         access_menu_is_updated  = True
                         break
                     else:
                         access_menu_is_updated  = False
+                # Jika ada data access menu sebelumnya
                 else:
-                    access_menu_is_updated  = cek_data_role["am_m_id"] not in p_access_menu
-                if (access_menu_is_updated is True):
-                    break
+                    # Jika jumlah access menu yang terdaftar sesuai dengan jumlah checkbox access menu yang dipilih, cek ada perubahan atau tidak
+                    if (len(hasil_get_data_role_cek["result"]) == len(p_access_menu)):                        
+                        access_menu_is_updated  = cek_data_role["am_m_id"] not in p_access_menu
+                    else:
+                        access_menu_is_updated  = True
+                    if (access_menu_is_updated is True):
+                        break
+
             cek_role        = hasil_get_data_role_cek["result"][0]["r_desc"]
             cek_status      = hasil_get_data_role_cek["result"][0]["r_status"]            
             
@@ -437,25 +456,10 @@ def edit_data_role(p_id_role, p_role, p_access_menu, p_status, p_user_login):
             }
             cursor.execute(query, params)
 
-            # Insert access menu
-            for menu in p_access_menu:                
-                query   =   """
-                                INSERT INTO access_menu (
-                                    am_r_id,
-                                    am_m_id,
-                                    am_upd_user                                
-                                ) VALUES (
-                                    %(id_role)s,
-                                    %(menu)s,
-                                    %(user_login)s
-                                )
-                            """
-                params  = {
-                    "id_role"       : p_id_role,
-                    "menu"          : menu,
-                    "user_login"    : p_user_login
-                }
-                cursor.execute(query, params)
+            # Insert access menu dari role
+            hasil_add_access_menu   = add_access_menu(cursor, p_access_menu, p_id_role, p_user_login)            
+            if (hasil_add_access_menu["status"] == "F"):
+                return hasil_add_access_menu
 
             conn.commit()                      
 
