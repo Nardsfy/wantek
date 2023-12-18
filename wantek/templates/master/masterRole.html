@@ -232,9 +232,18 @@
                 // Reset checked checkbox terlebih dahulu
                 $("#editAccessMenu input[name='access_menu[]']").prop("checked", false)
                 // Set checked untuk menu yang dapat diakses oleh role sebelumnya
-                for (let menu of response.result) {
-                    $(`#menu_edit_${menu.am_m_id}`).prop("checked", true);
+                for (let menu of response.result) {                     
+                    $(`#menu_edit_${menu.am_m_id}`).prop("checked", true);                                                     
                 };
+                // Untuk uncheck menu parent, jika belum semua childnya checked
+                for (let menu of response.result) {                    
+                    let parent_id   = $(`#menu_edit_${menu.am_m_id}`).data("parent"); 
+                    if (parent_id != "#menu_edit_null") {
+                        let all_checked = $(parent_id).closest("li").find("> ul > li > :checkbox").length === $(parent_id).closest("li").find("> ul > li > :checkbox:checked").length;                        
+                        $(parent_id).prop("checked", all_checked);
+                    }      
+                };                
+
             },
             error       : function(response) {    
                 let category    = "error";

@@ -391,15 +391,13 @@ def edit_data_role(p_id_role, p_role, p_access_menu, p_status, p_user_login):
         conn    = connectionDB()
         try:
             cursor  = conn.cursor()
-
-            # Cek tidak ada data yang diupdate
+            
+            # Cek apakah ada data yang diupdate atau tidak
             hasil_get_data_role_cek = get_data_role_cek(cursor, p_id_role)
             if (hasil_get_data_role_cek["status"] == "F"):
                 return hasil_get_data_role_cek
             if (not hasil_get_data_role_cek["result"]):
-                return responseJSON(400, "F", f"Role <strong>{p_role.capitalize()}</strong> tidak ditemukan.", [])
-            
-            # Cek apakah ada data yang diupdate atau tidak
+                return responseJSON(400, "F", f"Role <strong>{p_role.capitalize()}</strong> tidak ditemukan.", [])                        
             access_menu_is_updated  = False
             for cek_data_role in hasil_get_data_role_cek["result"]: 
                 # Jika tidak ada data access menu sebelumnya
