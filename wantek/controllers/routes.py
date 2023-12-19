@@ -22,12 +22,20 @@ def global_var():
             flash(message, flash_type)
         list_akses_menu     = hasil_get_list_akses_menu["result"] 
         # Set children dari menu
+        grandparent = list_akses_menu[0]["m_id"]
         for menu in list_akses_menu:
-            menu_id, menu_desc, menu_parent, menu_link = menu.values()
-            if (menu_parent is None):
-                organized_menu[menu_id] = {"desc": menu_desc, "link": menu_link, "children": []}
+            menu_id, menu_desc, menu_parent, menu_link, menu_level = menu.values()            
+            if (menu_level < 1):
+                grandparent = menu_id
+                organized_menu[menu_id] = {"desc": menu_desc, "link": menu_link, "level": menu_level, "children": []}
             else:
-                organized_menu[menu_parent]["children"].append({"id": menu_id, "desc": menu_desc, "link": menu_link})
+                if (menu_parent in organized_menu):
+                    organized_menu[menu_parent]["children"].append({"id": menu_id, "desc": menu_desc, "link": menu_link, "grandchildren": []})
+                # Set grandchildren
+                else:       
+                    for child in organized_menu[grandparent]["children"]:
+                        if (child["id"] == menu_parent):
+                            child["grandchildren"].append({"id": menu_id, "desc": menu_desc, "link": menu_link})        
 
     return dict(
         APP_NAME    = app.config["APP_NAME"],

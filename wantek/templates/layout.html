@@ -43,6 +43,16 @@
         .btn-icon:hover {
             opacity: 60%;
         }
+
+        .dropdown-submenu {
+            position: relative;
+        }
+
+        .dropdown-submenu .dropdown-menu {
+            top: 0;
+            left: 100%;
+            margin-top: -1px;
+        }
     </style>
 </head>
 
@@ -57,20 +67,31 @@
             </button>
             <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
                 <ul class="navbar-nav">
-                    {% for menu_id, menu_info in AKSES_MENU.items() %}                    
+                    {% for menu_id, menu_info in AKSES_MENU.items() %}                          
                         {% if menu_info["children"] %}
-                        <li class="nav-item dropdown">
-                            <a id="navbarDropdown_{{ menu_id }}" class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">{{ menu_info["desc"] }}</a>
-                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown_{{ menu_id }}">
-                                {% for child in menu_info["children"] %}
-                                <li><a class="dropdown-item" href="{{ child['link'] }}">{{ child["desc"] }}</a></li>                                        
-                                {% endfor %}
-                            </ul>
-                        </li>
+                            <li class="nav-item dropdown">
+                                <a id="navbarDropdown_{{ menu_id }}" class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">{{ menu_info["desc"] }}</a>
+                                <ul class="dropdown-menu" aria-labelledby="navbarDropdown_{{ menu_id }}">
+                                    {% for child in menu_info["children"] %}                                        
+                                        {% if child["grandchildren"] %}
+                                            <li class="dropdown-submenu">
+                                                <a id="navbarDropdown_{{ child['id'] }}" class="dropdown-item d-flex justify-content-between has-child" href="#" data-bs-toggle="dropdown" aria-expanded="false">{{ child["desc"] }} <i class="caret fa-solid fa-caret-right ms-3 my-auto"></i></a>
+                                                <ul class="dropdown-menu" aria-labelledby="navbarDropdown_{{ child['id'] }}">
+                                                    {% for grandchild in child["grandchildren"] %}                                                        
+                                                        <li><a class="dropdown-item" href="{{ grandchild['link'] }}">{{ grandchild["desc"] }}</a></li>                                        
+                                                    {% endfor %}
+                                                </ul>
+                                            </li>
+                                        {% else %}
+                                            <li><a class="dropdown-item" href="{{ child['link'] }}">{{ child["desc"] }}</a></li>                                        
+                                        {% endif %}
+                                    {% endfor %}                                
+                                </ul>
+                            </li>
                         {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ menu_info['link'] }}">{{ menu_info["desc"] }}</a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ menu_info['link'] }}">{{ menu_info["desc"] }}</a>
+                            </li>
                         {% endif %}                        
                     {% endfor %}                    
                 </ul>
@@ -111,6 +132,27 @@
     <script src="{{ url_for('static', filename='sweetalert2/sweetalert2.min.js') }}"></script>              
 
     <script type="text/javascript">
+        $(document).ready(function() {
+            $(".dropdown-submenu a.has-child").click(function(e) {
+                $(this).next("ul").toggle();   
+                e.stopPropagation();             
+                e.preventDefault();
+            })
+
+            function updateCaretIcon() {
+                if ($(window).width() <= 768) {
+                    $(".caret").removeClass("fa-caret-right").addClass("fa-caret-down");
+                } else {
+                    $(".caret").removeClass("fa-caret-down").addClass("fa-caret-right");
+                };
+            }
+            updateCaretIcon();
+
+            $(window).resize(function() {
+                updateCaretIcon();
+            })
+        });
+
         function alertMessage(category, message) {            
             Swal.fire({
                 icon                : category == "danger" ? "error" : category, // Change category flash danger into error for icon

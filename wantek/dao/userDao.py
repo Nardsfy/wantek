@@ -55,7 +55,8 @@ def get_list_akses_menu(p_role):
                                 m.m_id,
                                 m.m_desc,                                                                                            
                                 m.m_parent,
-                                m.m_link                             
+                                m.m_link,
+                                m.m_level                           
                             FROM 
                                 menus m
                             JOIN access_menu am ON (am.am_m_id = m.m_id)
