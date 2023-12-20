@@ -66,35 +66,9 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
-                <ul class="navbar-nav">
-                    {% for menu_id, menu_info in AKSES_MENU.items() %}                          
-                        {% if menu_info["children"] %}
-                            <li class="nav-item dropdown">
-                                <a id="navbarDropdown_{{ menu_id }}" class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">{{ menu_info["desc"] }}</a>
-                                <ul class="dropdown-menu" aria-labelledby="navbarDropdown_{{ menu_id }}">
-                                    {% for child in menu_info["children"] %}                                        
-                                        {% if child["grandchildren"] %}
-                                            <li class="dropdown-submenu">
-                                                <a id="navbarDropdown_{{ child['id'] }}" class="dropdown-item d-flex justify-content-between has-child" href="#" data-bs-toggle="dropdown" aria-expanded="false">{{ child["desc"] }} <i class="caret fa-solid fa-caret-right ms-3 my-auto"></i></a>
-                                                <ul class="dropdown-menu" aria-labelledby="navbarDropdown_{{ child['id'] }}">
-                                                    {% for grandchild in child["grandchildren"] %}                                                        
-                                                        <li><a class="dropdown-item" href="{{ grandchild['link'] }}">{{ grandchild["desc"] }}</a></li>                                        
-                                                    {% endfor %}
-                                                </ul>
-                                            </li>
-                                        {% else %}
-                                            <li><a class="dropdown-item" href="{{ child['link'] }}">{{ child["desc"] }}</a></li>                                        
-                                        {% endif %}
-                                    {% endfor %}                                
-                                </ul>
-                            </li>
-                        {% else %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ menu_info['link'] }}">{{ menu_info["desc"] }}</a>
-                            </li>
-                        {% endif %}                        
-                    {% endfor %}                    
-                </ul>
+                <div id="navbarMenu">
+                    <!-- Navbar menu dari jquery -->
+                </div>
                 <ul class="navbar-nav me-5">
                     <li class="nav-item dropdown">                                                 
                         <a id="dropdown-user" class="nav-link dropdown-toggle active" href="#" data-bs-toggle="dropdown" aria-expanded="false">{{ current_user.username|capitalize }}</a>                           
@@ -132,26 +106,89 @@
     <script src="{{ url_for('static', filename='sweetalert2/sweetalert2.min.js') }}"></script>              
 
     <script type="text/javascript">
-        $(document).ready(function() {
-            $(".dropdown-submenu a.has-child").click(function(e) {
-                $(this).next("ul").toggle();   
-                e.stopPropagation();             
-                e.preventDefault();
-            })
-
+        $(document).ready(function() {  
+            // Update caret untuk navbar dropdown-submenu agar responsive
             function updateCaretIcon() {
                 if ($(window).width() <= 768) {
                     $(".caret").removeClass("fa-caret-right").addClass("fa-caret-down");
                 } else {
                     $(".caret").removeClass("fa-caret-down").addClass("fa-caret-right");
                 };
-            }
-            updateCaretIcon();
+            };
 
+            // Reload icon setiap resize
             $(window).resize(function() {
                 updateCaretIcon();
-            })
+            });
+
+            // Initialize icon awal
+            updateCaretIcon(); 
+
+            // Navbar menu
+            let navbar  = "{{ AKSES_MENU|safe }}";        
+            navbar      = navbar.replace(/'/g, '"').replace(/None/g, null);
+            navbar      = JSON.parse(navbar);
+
+            // Create navbar
+            createNavbar(navbar, "#navbarMenu");
+
+            // Open display block dropdown-submenu
+            $(".dropdown-submenu a.has-child").click(function(e) {
+                $(this).next("ul").toggle();   
+                e.stopPropagation();             
+                e.preventDefault();
+            });
         });
+
+        function createNavbar(data, container) {
+            // Recursive function to build the tree
+            function buildNavbar(parent, parentId) {            
+                var children    = data.filter(item => item.m_parent === parentId);
+                var index_ul    = 0;
+
+                if (children.length > 0) {                    
+                    var ul  = $(`<ul id="menu_${index_ul}">`);
+                    children.forEach(child => {                          
+                        if (child.m_level < 1) {
+                            ul.addClass("navbar-nav");
+                        } else {
+                            ul.addClass("dropdown-menu")
+                        };
+                        // Set awal jika menu memiliki link
+                        var li  = $("<li class='nav-item'>");
+                        var a   = $(`<a id="navbarDropdown_${child.m_id}" class="nav-link" href="${child.m_link}">${child.m_desc}</a>`);                                                                
+                        
+                        // Jika menu memiliki child dan minimal level 1, ubah menjadi dropdown-submenu dari css
+                        if (child.m_link == null && child.m_level > 0) {                                                   
+                            li.removeClass("nav-item").addClass("dropdown-submenu");
+                            a.removeClass("nav-link").addClass("dropdown-item d-flex justify-content-between has-child").attr("data-bs-toggle", "dropdown").attr("aria-expanded", "false").attr("href", "#");                            
+                            var caret = $("<i class='caret fa-solid fa-caret-right ms-3 my-auto'></i>");
+                            a.append(caret);
+                            ul.attr("aria-labelledby", `navbarDropdown_${child.m_id}`);
+                        // Jika submenu memiliki link, tidak perlu ditambahkan dropdown-submenu
+                        } else if (child.m_link != null && child.m_level > 0) {                            
+                            li.removeClass("nav-item");
+                            a.removeClass("nav-link").addClass("dropdown-item");
+                        // Jika menu memiliki child dan level 0, set dropdown dari bootstrap
+                        } else if (child.m_link == null) {
+                            li.addClass("dropdown");
+                            a.addClass("dropdown-toggle").attr("data-bs-toggle", "dropdown").attr("aria-expanded", "false").attr("href", "#");                            
+                        };
+                            
+                        li.append(a);                        
+                        ul.append(li);                        
+                        index_ul++;
+
+                        buildNavbar(li, child.m_id);
+                    });
+
+                    parent.append(ul);
+                };
+            };
+
+            // Initialize the tree
+            buildNavbar($(container), null);
+        };
 
         function alertMessage(category, message) {            
             Swal.fire({
